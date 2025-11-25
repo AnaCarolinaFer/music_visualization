@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seen Music - Floresta Sincronizada WebGL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/addons/p5.sound.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            max-width: 320px;
+            z-index: 100;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.5);
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(79, 172, 254, 0.1);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            border-radius: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .slider-group {
+            margin: 15px 0;
+        }
+
+        .slider-group label {
+            font-size: 12px;
+            display: block;
+            margin-bottom: 5px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(79, 172, 254, 0.3);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(79, 172, 254, 0.5);
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 12px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 5px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        #debug {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #0f0;
+            display: none;
+            z-index: 100;
+            border: 1px solid #0f0;
+        }
+
+        #debug.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h1>Seen Music</h1>
+        <p class="subtitle">Floresta Sincronizada WebGL - Visualização 3D com Shaders</p>
+
+        <input type="file" id="audioFile" accept="audio/*">
+        <label for="audioFile" class="file-label">📁 Carregar Música</label>
+
+        <button onclick="useMicrophone()">🎤 Usar Microfone</button>
+        <button onclick="playTestSound()">🎹 Som de Teste</button>
+        <button onclick="togglePlay()" id="playBtn">▶️ Play/Pause</button>
+
+        <div class="slider-group">
+            <label>Sensibilidade: <span id="sensVal">1.5</span></label>
+            <input type="range" id="sensitivity" min="0.5" max="3" step="0.1" value="1.5"
+                   oninput="updateSensitivity(this.value)">
+        </div>
+
+        <div class="slider-group">
+            <label>Intensidade da Dança: <span id="danceVal">1.0</span></label>
+            <input type="range" id="danceIntensity" min="0" max="2" step="0.1" value="1"
+                   oninput="updateDanceIntensity(this.value)">
+        </div>
+
+        <div class="slider-group">
+            <label>Profundidade 3D: <span id="depthVal">300</span></label>
+            <input type="range" id="depthScale" min="100" max="500" step="50" value="300"
+                   oninput="updateDepthScale(this.value)">
+        </div>
+
+        <div class="status" id="status">🎵 Inicializando WebGL...</div>
+
+        <div class="info">
+            <b>🌟 Mapeamento 3D:</b><br>
+            🌳 Árvores → Graves (Fundo)<br>
+            🌿 Arbustos → Percussão (Meio)<br>
+            🌸 Flores → Vozes (Frente)<br>
+            🌱 Raízes → Agudos (1º Plano)<br>
+            <br>
+            <b>Controles:</b> D = Debug | R = Reset
+        </div>
+    </div>
+
+    <div id="debug">
+        <div id="debugInfo"></div>
+    </div>
+
+    <!-- Script Final Corrigido -->
+    <script src="sketch.js"></script>
+
+    <!-- Shaders como strings JavaScript para evitar problemas de carregamento -->
+    <script>
+        // Vertex Shader Source
+        const vertexShaderSource = `
+            precision mediump float;
+
+            attribute vec3 aPosition;
+            attribute vec2 aTexCoord;
+
+            uniform mat4 uProjectionMatrix;
+            uniform mat4 uModelViewMatrix;
+            uniform float u_time;
+            uniform float u_amplitude;
+            uniform float u_flux;
+            uniform float u_flatness;
+            uniform float u_danceIntensity;
+
+            varying vec2 vTexCoord;
+            varying float vDanceEffect;
+
+            void main() {
+                vTexCoord = aTexCoord;
+                vec3 pos = aPosition;
+
+                // Pulsação vertical baseada na amplitude
+                float pulseAmount = 1.0 + u_amplitude * 0.4 * u_danceIntensity;
+                pos.y *= pulseAmount;
+
+                // Escala horizontal baseada em flatness
+                float widthFactor = mix(1.2, 0.8, u_flatness);
+                pos.x *= widthFactor;
+
+                // Balanço rítmico - mais forte no topo
+                float heightFactor = 1.0 - aTexCoord.y;
+                float swayFrequency = 2.0 + u_flux * 3.0;
+                float swayAmount = sin(u_time * swayFrequency) * u_flux * 0.2 * heightFactor * u_danceIntensity;
+
+                pos.x += swayAmount * abs(pos.y) * 0.5;
+
+                // Movimento secundário
+                float secondarySway = cos(u_time * 1.5 + pos.y * 0.1) * u_amplitude * 0.05 * heightFactor;
+                pos.x += secondarySway;
+
+                vDanceEffect = u_amplitude * u_danceIntensity;
+
+                gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        // Fragment Shader Source
+        const fragmentShaderSource = `
+            precision mediump float;
+
+            uniform sampler2D u_texture;
+            uniform float u_baseHue;
+            uniform float u_amplitude;
+            uniform float u_centroid;
+            uniform float u_time;
+
+            varying vec2 vTexCoord;
+            varying float vDanceEffect;
+
+            vec3 hsb2rgb(vec3 hsb) {
+                vec3 rgb = clamp(abs(mod(hsb.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+                return hsb.z * mix(vec3(1.0), rgb, hsb.y);
+            }
+
+            void main() {
+                vec4 texColor = texture2D(u_texture, vTexCoord);
+
+                if (texColor.a < 0.1) {
+                    discard;
+                }
+
+                float hue = u_baseHue;
+                float saturation = mix(0.4, 1.0, u_centroid);
+                float brightness = mix(0.9, 0.5, u_amplitude);
+
+                hue += sin(u_time * 0.5 + vDanceEffect) * 0.05;
+
+                vec3 hsbColor = vec3(hue, saturation, brightness);
+                vec3 rgbColor = hsb2rgb(hsbColor);
+
+                gl_FragColor = vec4(rgbColor * texColor.rgb, texColor.a);
+            }
+        `;
+
+        // Tornar os shaders disponíveis globalmente
+        window.vertexShaderSource = vertexShaderSource;
+        window.fragmentShaderSource = fragmentShaderSource;
+    </script>
+</body>
+</html>
