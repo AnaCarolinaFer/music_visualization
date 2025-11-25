@@ -27,3 +27,6 @@ build/
 # Temporary files
 *.tmp
 *.log
+
+# AI assistant documentation
+CLAUDE.md
