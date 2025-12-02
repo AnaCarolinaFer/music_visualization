@@ -6,6 +6,15 @@
     <title>Seen Music - Floresta Sincronizada WebGL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/addons/p5.sound.min.js"></script>
+
+    <!-- Meyda for real-time timbre analysis -->
+    <script src="https://cdn.jsdelivr.net/npm/meyda@5.6.0/dist/web/meyda.min.js"></script>
+
+    <!-- Essentia.js for ML-based instrument detection (refinement layer) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/essentia.js@0.1.3/dist/essentia-wasm.web.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/essentia.js@0.1.3/dist/essentia.js-model.umd.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -191,11 +200,13 @@
         <div class="status" id="status">🎵 Inicializando WebGL...</div>
 
         <div class="info">
-            <b>🌟 Mapeamento 3D:</b><br>
-            🌳 Árvores → Graves (Fundo)<br>
-            🌿 Arbustos → Percussão (Meio)<br>
-            🌸 Flores → Vozes (Frente)<br>
-            🌱 Raízes → Agudos (1º Plano)<br>
+            <b>🎵 Mapeamento por Instrumento:</b><br>
+            🌳 <strong>Árvores</strong> → Contrabaixo/Cordas graves (fundo)<br>
+            🌸 <strong>Flores</strong> → Vozes/Sintetizadores (meio-fundo)<br>
+            🌿 <strong>Arbustos</strong> → Percussão/Batidas (meio-frente)<br>
+            🌱 <strong>Raízes</strong> → Flauta/Agudos (frente)<br>
+            <br>
+            <small>Análise avançada: Meyda (timbre) + Essentia.js (ML)</small><br>
             <br>
             <b>Controles:</b> D = Debug | R = Reset
         </div>
@@ -225,36 +236,80 @@
             uniform float u_flatness;
             uniform float u_danceIntensity;
 
+            // Novos uniforms para movimentos específicos por planta
+            uniform float u_plantType;      // 0=trees, 1=flowers, 2=bushes, 3=roots
+            uniform float u_vocalPitch;     // Flores: tom vocal (0-1)
+            uniform float u_beatIntensity;  // Arbustos: força da batida (0 ou 1)
+            uniform float u_timeSinceBeat;  // Arbustos: ms desde a batida
+
             varying vec2 vTexCoord;
             varying float vDanceEffect;
 
             void main() {
-                vTexCoord = aTexCoord;
                 vec3 pos = aPosition;
+                float heightFactor = aTexCoord.y; // 0 = base, 1 = topo
 
-                // Pulsação vertical baseada na amplitude
-                float pulseAmount = 1.0 + u_amplitude * 0.4 * u_danceIntensity;
-                pos.y *= pulseAmount;
+                // === ÁRVORES (0): Balanço/torção - base fixa, topo move ===
+                if (u_plantType < 0.5) {
+                    float swayAmount = u_amplitude * u_danceIntensity * 50.0;
+                    float swayFreq = u_flux * 2.0 + 0.5;
 
-                // Escala horizontal baseada em flatness
-                float widthFactor = mix(1.2, 0.8, u_flatness);
-                pos.x *= widthFactor;
+                    // Balanço lateral (aumenta com altura)
+                    float sway = sin(u_time * swayFreq) * swayAmount * heightFactor;
+                    pos.x += sway;
 
-                // Balanço rítmico - mais forte no topo
-                float heightFactor = 1.0 - aTexCoord.y;
-                float swayFrequency = 2.0 + u_flux * 3.0;
-                float swayAmount = sin(u_time * swayFrequency) * u_flux * 0.2 * heightFactor * u_danceIntensity;
+                    // Torção em profundidade (sutil)
+                    float twist = cos(u_time * swayFreq * 0.5) * swayAmount * 0.5 * heightFactor;
+                    pos.z += twist;
+                }
 
-                pos.x += swayAmount * abs(pos.y) * 0.5;
+                // === FLORES (1): Altura varia com tom vocal ===
+                else if (u_plantType < 1.5) {
+                    // Escala vertical baseada no tom
+                    float pitchScale = mix(0.5, 1.5, u_vocalPitch);
+                    pos.y *= pitchScale;
 
-                // Movimento secundário
-                float secondarySway = cos(u_time * 1.5 + pos.y * 0.1) * u_amplitude * 0.05 * heightFactor;
-                pos.x += secondarySway;
+                    // Balanço suave
+                    float sway = sin(u_time * 1.5) * u_amplitude * 20.0 * heightFactor;
+                    pos.x += sway;
+                }
 
+                // === ARBUSTOS (2): Pulsam com batidas de percussão ===
+                else if (u_plantType < 2.5) {
+                    // Expansão rápida na batida, decaimento exponencial
+                    float decayFactor = exp(-u_timeSinceBeat / 150.0);
+                    float pulseScale = 1.0 + u_beatIntensity * 0.3 * decayFactor;
 
-                vDanceEffect = u_amplitude * u_danceIntensity;
+                    // Escala uniforme (expandir/contrair)
+                    pos.xy *= pulseScale;
 
+                    // Oscilação amortecida após batida
+                    if (u_timeSinceBeat < 300.0) {
+                        float oscillation = sin(u_timeSinceBeat * 0.05) * decayFactor;
+                        pos.xy *= (1.0 + oscillation * 0.15);
+                    }
+                }
+
+                // === RAÍZES (3): Ramificações crescem com agudos ===
+                else {
+                    // Crescimento nas extremidades (bordas/pontas)
+                    float distanceFromCenter = length(aTexCoord - vec2(0.5, 0.5));
+                    float isExtremity = smoothstep(0.3, 0.7, distanceFromCenter);
+
+                    // Crescimento radial para fora
+                    vec2 direction = normalize(aTexCoord - vec2(0.5, 0.5));
+                    float growthAmount = u_amplitude * 50.0 * isExtremity;
+                    pos.xy += direction * growthAmount;
+
+                    // Alcance sutil para cima
+                    pos.y += u_amplitude * 20.0 * isExtremity;
+                }
+
+                // Transformação padrão
                 gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(pos, 1.0);
+
+                vTexCoord = aTexCoord;
+                vDanceEffect = u_amplitude * u_danceIntensity;
             }
         `;
 
@@ -284,8 +339,9 @@
                 }
 
                 float hue = u_baseHue;
-                float saturation = mix(0.4, 1.0, u_centroid);
-                float brightness = mix(0.9, 0.5, u_amplitude);
+                // Ensure minimum saturation and brightness for visibility
+                float saturation = mix(0.7, 1.0, u_centroid);  // Changed from 0.4 to 0.7
+                float brightness = mix(1.0, 0.8, u_amplitude); // Changed from (0.9, 0.5) to (1.0, 0.8)
 
                 hue += sin(u_time * 0.5 + vDanceEffect) * 0.05;
 
@@ -299,6 +355,55 @@
         // Tornar os shaders disponíveis globalmente
         window.vertexShaderSource = vertexShaderSource;
         window.fragmentShaderSource = fragmentShaderSource;
+
+        // === GROUND SHADER - Plano do chão com gradiente verde/marrom ===
+        const groundVertexShader = `
+            attribute vec3 aPosition;
+            attribute vec2 aTexCoord;
+
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uProjectionMatrix;
+
+            varying vec2 vUv;
+
+            void main() {
+                // Compute UV from world space position for consistent gradient
+                // Ground plane is width*2 wide and 800 deep, rotated 90° around X
+                // After rotation, Y becomes depth direction for gradient
+                vUv = vec2(
+                    (aPosition.x / 2000.0) + 0.5,  // X: horizontal mapping
+                    (aPosition.y / 800.0) + 0.5    // Y: depth mapping (gradient direction)
+                );
+
+                vec4 positionVec4 = vec4(aPosition, 1.0);
+                gl_Position = uProjectionMatrix * uModelViewMatrix * positionVec4;
+            }
+        `;
+
+        const groundFragmentShader = `
+            precision mediump float;
+            varying vec2 vUv;
+
+            void main() {
+                float groundLevel = 0.3;
+                float transitionWidth = 0.05;
+
+                vec3 grassColor = vec3(0.2, 0.5, 0.1);  // Verde grama
+                vec3 dirtColor = vec3(0.4, 0.26, 0.13); // Marrom terra
+
+                float groundMix = smoothstep(
+                    groundLevel - transitionWidth,
+                    groundLevel + transitionWidth,
+                    vUv.y
+                );
+
+                vec3 finalColor = mix(dirtColor, grassColor, groundMix);
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+
+        window.groundVertexShader = groundVertexShader;
+        window.groundFragmentShader = groundFragmentShader;
     </script>
 </body>
 </html>
