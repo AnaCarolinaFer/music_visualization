@@ -173,18 +173,25 @@ class PlantGroup {
         // Z-depth variation
         let z = this.zPos + random(-50, 50);
 
+        // Calculate size first (needed for Y positioning)
+        let sizeModifier = random(0.8, 1.2) * this.scaleMultiplier;
+
         // Posição Y baseada no grupo - Plantas posicionadas no chão
         let groundY = 100;  // Ground level
         let y;
 
         if (this.name === 'trees') {
-            y = groundY - 200; // Trees: tall, base touches ground (y=-100)
+            // Trees: tall, bottom edge should touch ground
+            y = groundY - sprite.height * sizeModifier * 0.4; // Bottom touches ground
         } else if (this.name === 'flowers') {
-            y = groundY - 80;  // Flowers: medium height (y=20)
+            // Flowers: medium height, bottom touches ground
+            y = groundY - sprite.height * sizeModifier * 0.45;
         } else if (this.name === 'bushes') {
-            y = groundY - 60;  // Bushes: short-medium (y=40)
+            // Bushes: short, bottom touches ground
+            y = groundY - sprite.height * sizeModifier * 0.45;
         } else if (this.name === 'roots') {
-            y = groundY;       // Roots: at ground level (y=100)
+            // Roots: half above, half below ground
+            y = groundY;
         } else {
             y = groundY + (this.yPosRatio - 0.5) * 200;
         }
@@ -195,7 +202,7 @@ class PlantGroup {
             z: z,
             sprite: sprite,
             phaseOffset: random(TWO_PI),
-            sizeModifier: random(0.8, 1.2) * this.scaleMultiplier, // APPLY SCALE
+            sizeModifier: sizeModifier,
             swaySpeed: random(0.8, 1.2),
             planeWidth: sprite.width,
             planeHeight: sprite.height
@@ -205,12 +212,6 @@ class PlantGroup {
     update() {
         this.time += 0.05; // Muito mais rápido
         this.testTime += 0.03;
-
-        // FORCE HIGH AMPLITUDE - Always keep plants visible
-        this.amplitude = 0.9;
-        this.flux = 0.8;
-        this.centroid = 0.7;
-        this.flatness = 0.5;
 
         // Safety check: ensure no NaN values
         if (isNaN(this.amplitude)) this.amplitude = 0.9;
@@ -226,42 +227,93 @@ class PlantGroup {
             push();
             translate(inst.x, inst.y, inst.z);
 
-            // Movimento manual além do shader para garantir visualização
-            let manualSway = sin(this.time + inst.phaseOffset) * 10 * this.amplitude;
-            translate(manualSway, 0, 0);
-
-            // Rotação sutil
-            rotateZ(sin(this.time * inst.swaySpeed) * 0.05 * this.flux);
-
-            shader(ambientShader);
-
-            // Valores forçados para debug - garantir que algo chegue ao shader
-            ambientShader.setUniform('u_texture', inst.sprite.img);
-            ambientShader.setUniform('u_time', this.time);
-
-            // Safety: Never pass NaN or invalid values to shader
+            // Safety: Never pass NaN or invalid values
             let safeAmplitude = isNaN(this.amplitude) ? 0.9 : max(0.1, this.amplitude);
             let safeFlux = isNaN(this.flux) ? 0.8 : max(0.1, this.flux);
             let safeFlatness = isNaN(this.flatness) ? 0.5 : this.flatness;
             let safeCentroid = isNaN(this.centroid) ? 0.7 : this.centroid;
 
+            // CPU-SIDE MOVEMENT: Each plant dances uniquely based on its phaseOffset
+            let time = this.time + inst.phaseOffset; // Desynchronize with phase offset
+            let swaySpeed = inst.swaySpeed || 1.0;
+
+            // Different movement per plant type - MUCH MORE DRAMATIC and AUDIO-REACTIVE
+            if (this.name === 'trees') {
+                // Trees: Sway side to side - responds to bass/strings
+                let swayAmount = pow(safeAmplitude, 1.5) * danceIntensity * 25.0; // Much stronger, exponential
+                let swayFreq = safeFlux * 3.0 + 1.0;
+                let sway = sin(time * swayFreq * swaySpeed) * swayAmount;
+
+                // Add depth sway based on centroid
+                let depthSway = cos(time * swayFreq * 0.7 * swaySpeed) * swayAmount * 0.3;
+                translate(sway, 0, depthSway);
+
+                // Subtle rotation based on amplitude
+                rotateZ(sin(time * swayFreq * swaySpeed) * safeAmplitude * 0.15);
+            } else if (this.name === 'flowers') {
+                // Flowers: Circular motion - responds to vocals
+                let moveAmount = pow(safeAmplitude, 1.2) * danceIntensity * 15.0;
+                let speed = 1.0 + safeFlux * 2.0;
+                let swayX = sin(time * speed * swaySpeed) * moveAmount;
+                let swayY = cos(time * speed * swaySpeed) * moveAmount * 0.7;
+
+                // Scale slightly with amplitude (breathing effect)
+                let breathe = 1.0 + sin(time * 2.0 * swaySpeed) * safeAmplitude * 0.2;
+                scale(breathe);
+
+                translate(swayX, swayY, 0);
+            } else if (this.name === 'bushes') {
+                // Bushes: Energetic bouncing - responds to percussion
+                let pulseAmount = pow(safeAmplitude, 1.3) * danceIntensity * 20.0;
+                let bounceSpeed = 2.0 + safeFlux * 3.0;
+                let pulse = abs(sin(time * bounceSpeed * swaySpeed)) * pulseAmount;
+
+                // Add horizontal shake
+                let shake = sin(time * bounceSpeed * 2.0 * swaySpeed) * pulseAmount * 0.3;
+
+                // Scale pulse (expand/contract)
+                let pulseFactor = 1.0 + sin(time * bounceSpeed * swaySpeed) * safeAmplitude * 0.3;
+                scale(pulseFactor);
+
+                translate(shake, -pulse, 0);
+            } else if (this.name === 'roots') {
+                // Roots: Chaotic wiggle - responds to treble/winds
+                let wiggleAmount = pow(safeAmplitude, 1.4) * danceIntensity * 18.0;
+                let chaos = 3.0 + safeFlux * 4.0;
+                let wiggleX = sin(time * chaos * swaySpeed) * wiggleAmount;
+                let wiggleZ = cos(time * chaos * 1.3 * swaySpeed) * wiggleAmount * 0.6;
+                let wiggleY = sin(time * chaos * 0.7 * swaySpeed) * wiggleAmount * 0.3;
+
+                translate(wiggleX, wiggleY, wiggleZ);
+
+                // Slight rotation for more chaos
+                rotateY(sin(time * chaos * swaySpeed) * safeAmplitude * 0.1);
+            }
+
+            // Debug: Log movement values for first plant periodically
+            if (frameCount % 120 === 0 && this.name === 'trees' && this.instances.indexOf(inst) === 0) {
+                console.log('=== MOVEMENT DEBUG ===');
+                console.log('Plant:', this.name, 'Amplitude:', safeAmplitude.toFixed(2), 'Flux:', safeFlux.toFixed(2));
+                console.log('PhaseOffset:', inst.phaseOffset.toFixed(2), 'SwaySpeed:', swaySpeed.toFixed(2));
+            }
+
+            // Set texture first, then shader immediately before drawing
+            texture(inst.sprite.img);
+            shader(ambientShader);
+
+            // Set all shader uniforms
+            ambientShader.setUniform('u_time', this.time);
             ambientShader.setUniform('u_amplitude', safeAmplitude);
             ambientShader.setUniform('u_flux', safeFlux);
             ambientShader.setUniform('u_flatness', safeFlatness);
             ambientShader.setUniform('u_centroid', safeCentroid);
             ambientShader.setUniform('u_baseHue', this.baseHue / 360.0);
             ambientShader.setUniform('u_danceIntensity', danceIntensity);
-
-            // Novos uniforms para movimentos específicos por planta
+            ambientShader.setUniform('u_phaseOffset', inst.phaseOffset);
             ambientShader.setUniform('u_vocalPitch', this.vocalPitch || 0);
             ambientShader.setUniform('u_beatIntensity', this.beatIntensity || 0);
             ambientShader.setUniform('u_timeSinceBeat', this.timeSinceBeat || 0);
-
-            // Identificador do tipo de planta
-            let plantTypeIndex = ['trees', 'flowers', 'bushes', 'roots'].indexOf(this.name);
-            ambientShader.setUniform('u_plantType', plantTypeIndex);
-
-            texture(inst.sprite.img);
+            ambientShader.setUniform('u_plantType', ['trees', 'flowers', 'bushes', 'roots'].indexOf(this.name));
 
             // IMPORTANTE: Mais subdivisões para permitir deformação do shader
             plane(
@@ -789,22 +841,248 @@ async function runEssentiaRefinement() {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUDIO ANALYSIS PIPELINE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Data Flow:
+// 1. extractRawAudioFeatures() → Raw spectrum + Meyda features
+// 2. classifyInstruments() → Heuristic scores + ML blending
+// 3. updatePlantGroupsFromInstruments() → Per-plant parameter updates
+//
+// Instrument-to-Plant Mapping:
+// - Trees → Strings/Bass (60-250Hz) - Sway and twist
+// - Flowers → Vocals/Synths (250-2kHz) - Height varies with pitch
+// - Bushes → Percussion - Pulse with beats
+// - Roots → Flute/Highs (2kHz+) - Branches grow
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Main audio analysis orchestrator
+ * Extracts features, classifies instruments, and updates plant groups
+ */
 function analyzeAudio() {
     if (!fft || !amplitude) return;
 
-    // TEMPORARY: Skip audio analysis to debug visibility issues
-    return;
+    // 1. Extract raw audio features
+    const rawFeatures = extractRawAudioFeatures();
 
-    // Get FFT spectrum
+    // 2. Classify instruments using heuristics + ML
+    const instrumentScores = classifyInstruments(rawFeatures);
+
+    // 3. Update plant groups with instrument data
+    updatePlantGroupsFromInstruments(instrumentScores, rawFeatures);
+}
+
+/**
+ * Extract raw audio features from FFT and Meyda
+ * Returns object with spectrum, volume, beat detection, and timbre features
+ */
+function extractRawAudioFeatures() {
     spectrum = fft.analyze();
     volume = amplitude.getLevel();
-
-    // Beat detection
     peakDetect.update(fft);
-    beatDetected = peakDetect.isDetected;
 
-    // Get global features from Meyda (or fallback)
-    const globalFeatures = meydaFeatures || {
+    return {
+        spectrum: spectrum,
+        volume: volume,
+        beatDetected: peakDetect.isDetected,
+        globalFeatures: meydaFeatures || getFallbackFeatures(),
+        bandTimbre: {
+            bass: extractBandTimbre(spectrum, bandRanges.bass.start, bandRanges.bass.end),
+            lowMid: extractBandTimbre(spectrum, bandRanges.lowMid.start, bandRanges.lowMid.end),
+            highMid: extractBandTimbre(spectrum, bandRanges.highMid.start, bandRanges.highMid.end),
+            treble: extractBandTimbre(spectrum, bandRanges.treble.start, bandRanges.treble.end)
+        }
+    };
+}
+
+/**
+ * Classify instruments from audio features
+ * Uses heuristic classification + optional ML blending
+ * Returns instrument scores (strings, vocals, percussion, winds)
+ */
+function classifyInstruments(features) {
+    // LAYER 1: Heuristic classification (real-time, every frame)
+    let heuristicScores = {
+        strings: classifyInstrumentHeuristic(features.bandTimbre.bass, features.globalFeatures, 'strings'),
+        vocals: classifyInstrumentHeuristic(features.bandTimbre.lowMid, features.globalFeatures, 'vocals'),
+        percussion: classifyPercussion(features.bandTimbre.lowMid, features.globalFeatures, features.beatDetected),
+        winds: classifyInstrumentHeuristic(features.bandTimbre.treble, features.globalFeatures, 'winds')
+    };
+
+    // Apply fallback if confidence too low
+    heuristicScores = applyEnergyFallback(heuristicScores, features.bandTimbre);
+
+    // LAYER 2: ML refinement (periodic, non-blocking)
+    runEssentiaRefinement(); // Async, only runs if interval elapsed
+
+    // Blend with ML if available
+    const finalScores = blendWithMLScores(heuristicScores);
+
+    // Ensure minimum visibility (lowered to allow more dynamic range)
+    return ensureMinimumVisibility(finalScores, 0.2);
+}
+
+/**
+ * Update all plant groups based on instrument scores
+ * Delegates to individual plant updater functions
+ */
+function updatePlantGroupsFromInstruments(instrumentScores, features) {
+    // Debug: Log instrument scores
+    if (frameCount % 60 === 0) {  // Log once per second
+        console.log('Instrument Scores:', {
+            strings: instrumentScores.strings.toFixed(2),
+            vocals: instrumentScores.vocals.toFixed(2),
+            percussion: instrumentScores.percussion.toFixed(2),
+            winds: instrumentScores.winds.toFixed(2)
+        });
+        console.log('Plant Amplitudes:', {
+            trees: plantGroups[0].amplitude.toFixed(2),
+            flowers: plantGroups[1].amplitude.toFixed(2),
+            bushes: plantGroups[2].amplitude.toFixed(2),
+            roots: plantGroups[3].amplitude.toFixed(2)
+        });
+    }
+
+    updateTrees(instrumentScores.strings, features);
+    updateFlowers(instrumentScores.vocals, features);
+    updateBushes(instrumentScores.percussion, features);
+    updateRoots(instrumentScores.winds, features);
+}
+
+/**
+ * Update trees (respond to bass/strings)
+ * Movement: Sway and twist with base fixed
+ */
+function updateTrees(stringsScore, features) {
+    plantGroups[0].amplitude = max(0.1, lerp(
+        plantGroups[0].amplitude,
+        constrain(stringsScore * sensitivity, 0.1, 1.0),
+        smoothing * 1.5
+    ));
+    plantGroups[0].centroid = lerp(
+        plantGroups[0].centroid,
+        constrain(features.globalFeatures.spectralCentroid / 8000, 0, 1),
+        smoothing
+    );
+    plantGroups[0].flux = lerp(
+        plantGroups[0].flux,
+        constrain(features.globalFeatures.spectralFlux / 100, 0, 1),
+        smoothing * 2
+    );
+    plantGroups[0].flatness = lerp(
+        plantGroups[0].flatness,
+        features.bandTimbre.bass.flatness,
+        smoothing
+    );
+}
+
+/**
+ * Update flowers (respond to vocals/synths)
+ * Movement: Height varies with vocal pitch
+ */
+function updateFlowers(vocalsScore, features) {
+    plantGroups[1].amplitude = max(0.1, lerp(
+        plantGroups[1].amplitude,
+        constrain(vocalsScore * sensitivity, 0.1, 1.0),
+        smoothing * 1.5
+    ));
+    plantGroups[1].centroid = lerp(
+        plantGroups[1].centroid,
+        constrain(features.globalFeatures.spectralCentroid / 8000, 0, 1),
+        smoothing
+    );
+    plantGroups[1].flux = lerp(
+        plantGroups[1].flux,
+        constrain(features.globalFeatures.spectralFlux / 100, 0, 1),
+        smoothing * 2
+    );
+    plantGroups[1].flatness = lerp(
+        plantGroups[1].flatness,
+        features.bandTimbre.lowMid.flatness,
+        smoothing
+    );
+    // Vocal pitch tracking for height variation
+    if (features.globalFeatures.spectralCentroid) {
+        plantGroups[1].vocalPitch = constrain(features.globalFeatures.spectralCentroid / 4000, 0, 1);
+    }
+}
+
+/**
+ * Update bushes (respond to percussion)
+ * Movement: Pulse with beats (exponential decay)
+ */
+function updateBushes(percussionScore, features) {
+    plantGroups[2].amplitude = max(0.1, lerp(
+        plantGroups[2].amplitude,
+        constrain(percussionScore * sensitivity, 0.1, 1.0),
+        smoothing * 0.5  // Faster response for beats
+    ));
+    plantGroups[2].centroid = lerp(
+        plantGroups[2].centroid,
+        constrain(features.globalFeatures.spectralCentroid / 8000, 0, 1),
+        smoothing
+    );
+    plantGroups[2].flux = lerp(
+        plantGroups[2].flux,
+        constrain(features.globalFeatures.spectralFlux / 100, 0, 1),
+        smoothing * 0.5
+    );
+    plantGroups[2].flatness = lerp(
+        plantGroups[2].flatness,
+        features.bandTimbre.lowMid.flatness,
+        smoothing
+    );
+
+    // Beat timing for pulse animation
+    if (features.beatDetected) {
+        plantGroups[2].beatIntensity = 1.0;
+        plantGroups[2].timeSinceBeat = 0;
+        plantGroups[2].lastUpdateTime = millis();
+    } else {
+        plantGroups[2].timeSinceBeat = millis() - plantGroups[2].lastUpdateTime;
+        plantGroups[2].beatIntensity = max(0, 1.0 - plantGroups[2].timeSinceBeat / 500);
+    }
+}
+
+/**
+ * Update roots (respond to high frequencies - flute, cymbals)
+ * Movement: Branches grow with high frequencies
+ */
+function updateRoots(windsScore, features) {
+    plantGroups[3].amplitude = max(0.1, lerp(
+        plantGroups[3].amplitude,
+        constrain(windsScore * sensitivity, 0.1, 1.0),
+        smoothing * 1.5
+    ));
+    plantGroups[3].centroid = lerp(
+        plantGroups[3].centroid,
+        constrain(features.globalFeatures.spectralCentroid / 8000, 0, 1),
+        smoothing
+    );
+    plantGroups[3].flux = lerp(
+        plantGroups[3].flux,
+        constrain(features.globalFeatures.spectralFlux / 100, 0, 1),
+        smoothing * 2
+    );
+    plantGroups[3].flatness = lerp(
+        plantGroups[3].flatness,
+        features.bandTimbre.treble.flatness,
+        smoothing
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get fallback features when Meyda is unavailable
+ * Uses p5.sound FFT methods
+ */
+function getFallbackFeatures() {
+    return {
         spectralCentroid: fft.getCentroid(),
         spectralFlux: calculateSpectralFlux(spectrum),
         spectralFlatness: calculateSpectralFlatness(spectrum),
@@ -813,54 +1091,37 @@ function analyzeAudio() {
         zcr: null,
         mfcc: null
     };
+}
 
-    // Extract per-band timbre features
-    const bassTimbre = extractBandTimbre(spectrum, bandRanges.bass.start, bandRanges.bass.end);
-    const lowMidTimbre = extractBandTimbre(spectrum, bandRanges.lowMid.start, bandRanges.lowMid.end);
-    const highMidTimbre = extractBandTimbre(spectrum, bandRanges.highMid.start, bandRanges.highMid.end);
-    const trebleTimbre = extractBandTimbre(spectrum, bandRanges.treble.start, bandRanges.treble.end);
+/**
+ * Apply band energy fallback when classification confidence is low
+ * Ensures visualization never "dies" even with poor classification
+ */
+function applyEnergyFallback(scores, bandTimbre) {
+    const totalScore = scores.strings + scores.vocals + scores.percussion + scores.winds;
 
-    // LAYER 1: Heuristic classification (real-time, every frame)
-    let heuristicScores = {
-        strings: classifyInstrumentHeuristic(bassTimbre, globalFeatures, 'strings'),
-        vocals: classifyInstrumentHeuristic(lowMidTimbre, globalFeatures, 'vocals'),
-        percussion: classifyPercussion(lowMidTimbre, globalFeatures, beatDetected),
-        winds: classifyInstrumentHeuristic(trebleTimbre, globalFeatures, 'winds')
-    };
-
-    // FALLBACK: If all scores are very low, use band energy as fallback
-    const totalScore = heuristicScores.strings + heuristicScores.winds +
-                       heuristicScores.vocals + heuristicScores.percussion;
     if (totalScore < 0.5) {
-        // Blend with raw band energy to maintain visibility
-        heuristicScores.strings = Math.max(heuristicScores.strings, bassTimbre.energy * 0.7);
-        heuristicScores.vocals = Math.max(heuristicScores.vocals, lowMidTimbre.energy * 0.7);
-        heuristicScores.percussion = Math.max(heuristicScores.percussion, lowMidTimbre.energy * 0.7);
-        heuristicScores.winds = Math.max(heuristicScores.winds, trebleTimbre.energy * 0.7);
+        return {
+            strings: Math.max(scores.strings, bandTimbre.bass.energy * 0.7),
+            vocals: Math.max(scores.vocals, bandTimbre.lowMid.energy * 0.7),
+            percussion: Math.max(scores.percussion, bandTimbre.lowMid.energy * 0.7),
+            winds: Math.max(scores.winds, bandTimbre.treble.energy * 0.7)
+        };
     }
 
-    // LAYER 2: ML refinement (periodic, non-blocking)
-    runEssentiaRefinement(); // Async, only runs if interval elapsed
+    return scores;
+}
 
-    // HYBRID BLENDING: Only blend with ML if model is loaded, otherwise use heuristic only
-    let finalScores;
-    if (essentiaModel) {
-        // Blend heuristic (70%) + ML (30%) when ML is available
-        const blendWeight = { heuristic: 0.7, ml: 0.3 };
-        finalScores = {
-            strings: heuristicScores.strings * blendWeight.heuristic +
-                     mlInstrumentScores.strings * blendWeight.ml,
-            vocals: heuristicScores.vocals * blendWeight.heuristic +
-                    mlInstrumentScores.vocals * blendWeight.ml,
-            percussion: heuristicScores.percussion * blendWeight.heuristic,
-            winds: heuristicScores.winds * blendWeight.heuristic +
-                   mlInstrumentScores.winds * blendWeight.ml
-        };
-    } else {
-        // Use heuristic scores only when ML is not available
-        // Map scores to range [0.7, 1.0] so plants are ALWAYS visible
-        const minVisible = 0.7; // Plants always at least 70% active
-        finalScores = {
+/**
+ * Blend heuristic scores with ML scores (if ML model available)
+ * Uses 70% heuristic + 30% ML weighting
+ */
+function blendWithMLScores(heuristicScores) {
+    if (!essentiaModel) {
+        // Use heuristic scores only when ML not available
+        // Apply gentle minimum to prevent total silence while allowing dynamic range
+        const minVisible = 0.2;
+        return {
             strings: minVisible + (heuristicScores.strings * (1 - minVisible)),
             vocals: minVisible + (heuristicScores.vocals * (1 - minVisible)),
             percussion: minVisible + (heuristicScores.percussion * (1 - minVisible)),
@@ -868,119 +1129,30 @@ function analyzeAudio() {
         };
     }
 
-    // SAFETY GUARD: Ensure finalScores are ALWAYS >= 0.7, even if everything fails
-    finalScores.strings = Math.max(0.7, finalScores.strings);
-    finalScores.vocals = Math.max(0.7, finalScores.vocals);
-    finalScores.percussion = Math.max(0.7, finalScores.percussion);
-    finalScores.winds = Math.max(0.7, finalScores.winds);
+    // Blend heuristic (70%) + ML (30%) when ML is available
+    const blendWeight = { heuristic: 0.7, ml: 0.3 };
+    return {
+        strings: heuristicScores.strings * blendWeight.heuristic +
+                 mlInstrumentScores.strings * blendWeight.ml,
+        vocals: heuristicScores.vocals * blendWeight.heuristic +
+                mlInstrumentScores.vocals * blendWeight.ml,
+        percussion: heuristicScores.percussion * blendWeight.heuristic,
+        winds: heuristicScores.winds * blendWeight.heuristic +
+               mlInstrumentScores.winds * blendWeight.ml
+    };
+}
 
-    // Update plant groups with NEW INSTRUMENT MAPPING
-    // NOTE: plantGroups array order: [0]=trees, [1]=flowers, [2]=bushes, [3]=roots
-
-    // Trees → Strings/Bass (contrabaixo, cordas graves)
-    plantGroups[0].amplitude = max(0.7, lerp(
-        plantGroups[0].amplitude,
-        constrain(finalScores.strings * sensitivity, 0.7, 1.0),
-        smoothing * 1.5
-    ));
-    plantGroups[0].centroid = lerp(
-        plantGroups[0].centroid,
-        constrain(globalFeatures.spectralCentroid / 8000, 0, 1),
-        smoothing
-    );
-    plantGroups[0].flux = lerp(
-        plantGroups[0].flux,
-        constrain(globalFeatures.spectralFlux / 100, 0, 1),
-        smoothing * 2
-    );
-    plantGroups[0].flatness = lerp(
-        plantGroups[0].flatness,
-        bassTimbre.flatness,
-        smoothing
-    );
-
-    // Flowers → Vocals/Synthesizers (vozes)
-    plantGroups[1].amplitude = max(0.7, lerp(
-        plantGroups[1].amplitude,
-        constrain(finalScores.vocals * sensitivity, 0.7, 1.0),
-        smoothing * 1.5
-    ));
-    plantGroups[1].centroid = lerp(
-        plantGroups[1].centroid,
-        constrain(globalFeatures.spectralCentroid / 8000, 0, 1),
-        smoothing
-    );
-    plantGroups[1].flux = lerp(
-        plantGroups[1].flux,
-        constrain(globalFeatures.spectralFlux / 100, 0, 1),
-        smoothing * 2
-    );
-    plantGroups[1].flatness = lerp(
-        plantGroups[1].flatness,
-        lowMidTimbre.flatness,
-        smoothing
-    );
-    // Vocal pitch tracking for flowers (height variation)
-    if (globalFeatures.spectralCentroid) {
-        plantGroups[1].vocalPitch = constrain(globalFeatures.spectralCentroid / 4000, 0, 1);
-    }
-
-    // Bushes → Percussion (bateria, percussão)
-    plantGroups[2].amplitude = max(0.7, lerp(
-        plantGroups[2].amplitude,
-        constrain(finalScores.percussion * sensitivity, 0.7, 1.0),
-        smoothing * 1.5
-    ));
-    plantGroups[2].centroid = lerp(
-        plantGroups[2].centroid,
-        constrain(globalFeatures.spectralCentroid / 8000, 0, 1),
-        smoothing
-    );
-    plantGroups[2].flux = lerp(
-        plantGroups[2].flux,
-        constrain(globalFeatures.spectralFlux / 100, 0, 1),
-        smoothing * 2
-    );
-    plantGroups[2].flatness = lerp(
-        plantGroups[2].flatness,
-        lowMidTimbre.flatness,
-        smoothing
-    );
-    // Beat tracking for bushes (pulse effect)
-    if (beatDetected) {
-        plantGroups[2].beatIntensity = 1.0;
-        plantGroups[2].timeSinceBeat = 0;
-        plantGroups[2].lastUpdateTime = millis();
-    } else {
-        plantGroups[2].timeSinceBeat = millis() - plantGroups[2].lastUpdateTime;
-        plantGroups[2].beatIntensity = max(0, 1.0 - plantGroups[2].timeSinceBeat / 500);
-    }
-
-    // Roots → Winds/Highs (flauta, agudos)
-    plantGroups[3].amplitude = max(0.7, lerp(
-        plantGroups[3].amplitude,
-        constrain(finalScores.winds * sensitivity, 0.7, 1.0),
-        smoothing * 1.5
-    ));
-    plantGroups[3].centroid = lerp(
-        plantGroups[3].centroid,
-        constrain(globalFeatures.spectralCentroid / 8000, 0, 1),
-        smoothing
-    );
-    plantGroups[3].flux = lerp(
-        plantGroups[3].flux,
-        constrain(globalFeatures.spectralFlux / 100, 0, 1),
-        smoothing * 2
-    );
-    plantGroups[3].flatness = lerp(
-        plantGroups[3].flatness,
-        trebleTimbre.flatness,
-        smoothing
-    );
-
-    // Beat boost removed to prevent oscillation
-    // Beat effects are now handled by individual plant shader parameters
-    // (bushes use beatIntensity for pulse effects)
+/**
+ * Ensure all instrument scores are >= minimum value
+ * Safety guard to prevent plants from disappearing
+ */
+function ensureMinimumVisibility(scores, minValue) {
+    return {
+        strings: Math.max(minValue, scores.strings),
+        vocals: Math.max(minValue, scores.vocals),
+        percussion: Math.max(minValue, scores.percussion),
+        winds: Math.max(minValue, scores.winds)
+    };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1040,9 +1212,13 @@ function setup() {
             window.vertexShaderSource,
             window.fragmentShaderSource
         );
-        console.log('Shader criado com sucesso!');
+        if (ambientShader) {
+            console.log('Shader criado com sucesso!');
+        } else {
+            console.error('❌ Shader creation returned null - check for compilation errors');
+        }
     } catch(e) {
-        console.error('Erro ao criar shader:', e);
+        console.error('❌ Erro ao criar shader:', e);
     }
 
     // Criar ground shader

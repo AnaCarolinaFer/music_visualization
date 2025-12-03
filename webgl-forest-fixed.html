@@ -235,6 +235,7 @@
             uniform float u_flux;
             uniform float u_flatness;
             uniform float u_danceIntensity;
+            uniform float u_phaseOffset;    // Per-instance phase offset for desynchronization
 
             // Novos uniforms para movimentos específicos por planta
             uniform float u_plantType;      // 0=trees, 1=flowers, 2=bushes, 3=roots
@@ -254,12 +255,12 @@
                     float swayAmount = u_amplitude * u_danceIntensity * 50.0;
                     float swayFreq = u_flux * 2.0 + 0.5;
 
-                    // Balanço lateral (aumenta com altura)
-                    float sway = sin(u_time * swayFreq) * swayAmount * heightFactor;
+                    // Balanço lateral (aumenta com altura) - com offset de fase único
+                    float sway = sin(u_time * swayFreq + u_phaseOffset) * swayAmount * heightFactor;
                     pos.x += sway;
 
-                    // Torção em profundidade (sutil)
-                    float twist = cos(u_time * swayFreq * 0.5) * swayAmount * 0.5 * heightFactor;
+                    // Torção em profundidade (sutil) - offset diferente para mais variação
+                    float twist = cos(u_time * swayFreq * 0.5 + u_phaseOffset * 0.7) * swayAmount * 0.5 * heightFactor;
                     pos.z += twist;
                 }
 
@@ -269,8 +270,8 @@
                     float pitchScale = mix(0.5, 1.5, u_vocalPitch);
                     pos.y *= pitchScale;
 
-                    // Balanço suave
-                    float sway = sin(u_time * 1.5) * u_amplitude * 20.0 * heightFactor;
+                    // Balanço suave com fase única
+                    float sway = sin(u_time * 1.5 + u_phaseOffset) * u_amplitude * 20.0 * heightFactor;
                     pos.x += sway;
                 }
 
@@ -283,9 +284,9 @@
                     // Escala uniforme (expandir/contrair)
                     pos.xy *= pulseScale;
 
-                    // Oscilação amortecida após batida
+                    // Oscilação amortecida após batida - com fase para variação
                     if (u_timeSinceBeat < 300.0) {
-                        float oscillation = sin(u_timeSinceBeat * 0.05) * decayFactor;
+                        float oscillation = sin(u_timeSinceBeat * 0.05 + u_phaseOffset) * decayFactor;
                         pos.xy *= (1.0 + oscillation * 0.15);
                     }
                 }
@@ -296,9 +297,10 @@
                     float distanceFromCenter = length(aTexCoord - vec2(0.5, 0.5));
                     float isExtremity = smoothstep(0.3, 0.7, distanceFromCenter);
 
-                    // Crescimento radial para fora
+                    // Crescimento radial para fora com ligeira pulsação
                     vec2 direction = normalize(aTexCoord - vec2(0.5, 0.5));
-                    float growthAmount = u_amplitude * 50.0 * isExtremity;
+                    float pulsation = 1.0 + sin(u_time * 2.0 + u_phaseOffset) * 0.1;
+                    float growthAmount = u_amplitude * 50.0 * isExtremity * pulsation;
                     pos.xy += direction * growthAmount;
 
                     // Alcance sutil para cima
@@ -317,7 +319,7 @@
         const fragmentShaderSource = `
             precision mediump float;
 
-            uniform sampler2D u_texture;
+            uniform sampler2D tex0;  // p5.js uses 'tex0' for textures
             uniform float u_baseHue;
             uniform float u_amplitude;
             uniform float u_centroid;
@@ -332,7 +334,7 @@
             }
 
             void main() {
-                vec4 texColor = texture2D(u_texture, vTexCoord);
+                vec4 texColor = texture2D(tex0, vTexCoord);
 
                 if (texColor.a < 0.1) {
                     discard;
