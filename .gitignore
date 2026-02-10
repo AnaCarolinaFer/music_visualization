@@ -30,3 +30,22 @@ build/
 
 # AI assistant documentation
 CLAUDE.md
+
+# Python / Server
+server/venv/
+server/__pycache__/
+__pycache__/
+*.pyc
+
+# Modelo ML Spleeter (157MB)
+pretrained_models/
+server/pretrained_models/
+
+# Arquivos temporarios de upload/output
+server/uploads/*
+server/output/*
+!server/uploads/.gitkeep
+!server/output/.gitkeep
+
+# Arquivos orfaos / teste
+musica.mp3

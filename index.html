@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jardim Musical</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            overflow: hidden;
+        }
+
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+        }
+
+        #upload-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #upload-area label {
+            padding: 10px 20px;
+            background: #4a90d9;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        #upload-area label:hover {
+            background: #357abd;
+        }
+
+        #upload-area input[type="file"] {
+            display: none;
+        }
+
+        #status {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        #play-btn {
+            padding: 10px 20px;
+            background: #2ecc71;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            transition: background 0.2s;
+        }
+
+        #play-btn:hover { background: #27ae60; }
+
+        #play-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        #debug-panel {
+            position: fixed;
+            top: 70px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            z-index: 10;
+            min-width: 280px;
+        }
+
+        .stem-bar {
+            margin: 6px 0;
+        }
+
+        .stem-bar .label {
+            display: inline-block;
+            width: 100px;
+        }
+
+        .stem-bar .bar-bg {
+            display: inline-block;
+            width: 140px;
+            height: 14px;
+            background: #333;
+            border-radius: 4px;
+            vertical-align: middle;
+            overflow: hidden;
+        }
+
+        .stem-bar .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.05s;
+        }
+
+        .stem-bar .value {
+            display: inline-block;
+            width: 40px;
+            text-align: right;
+            font-size: 12px;
+        }
+
+        #graves-bar .bar-fill { background: #8B4513; }
+        #harmonia-bar .bar-fill { background: #e91e63; }
+        #percussao-bar .bar-fill { background: #4caf50; }
+        #agudos-bar .bar-fill { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <div id="ui-overlay">
+        <div id="upload-area">
+            <label for="audio-file">Escolher Musica</label>
+            <input type="file" id="audio-file" accept=".mp3,.wav,.ogg,.flac,.m4a">
+        </div>
+        <span id="status">Envie uma musica para comecar</span>
+        <button id="play-btn" onclick="togglePlay()">Play</button>
+        <div id="volume-area" style="display:none; align-items:center; gap:8px;">
+            <label for="volume-slider" style="font-size:13px;">Vol</label>
+            <input type="range" id="volume-slider" min="0" max="100" value="100"
+                   style="width:100px; cursor:pointer;" oninput="ajustarVolume(this.value)">
+        </div>
+    </div>
+
+    <div id="debug-panel">
+        <div><strong>Amplitudes dos Stems</strong></div>
+        <div class="stem-bar" id="graves-bar">
+            <span class="label">Graves</span>
+            <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
+            <span class="value">0.00</span>
+        </div>
+        <div class="stem-bar" id="harmonia-bar">
+            <span class="label">Harmonia</span>
+            <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
+            <span class="value">0.00</span>
+        </div>
+        <div class="stem-bar" id="percussao-bar">
+            <span class="label">Percussao</span>
+            <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
+            <span class="value">0.00</span>
+        </div>
+        <div class="stem-bar" id="agudos-bar">
+            <span class="label">Agudos</span>
+            <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
+            <span class="value">0.00</span>
+        </div>
+        <div id="fps" style="margin-top:8px; font-size:12px; color:#888;">FPS: --</div>
+        <div style="margin-top:6px; font-size:11px; color:#666;">D: toggle debug | Space: play/pause</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/addons/p5.sound.min.js"></script>
+    <script src="config.js"></script>
+    <script src="audio.js"></script>
+    <script src="particulas.js"></script>
+    <script src="plantas.js"></script>
+    <script src="sketch.js"></script>
+</body>
+</html>

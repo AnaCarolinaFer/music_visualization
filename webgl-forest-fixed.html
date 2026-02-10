@@ -204,7 +204,7 @@
             🌳 <strong>Árvores</strong> → Contrabaixo/Cordas graves (fundo)<br>
             🌸 <strong>Flores</strong> → Vozes/Sintetizadores (meio-fundo)<br>
             🌿 <strong>Arbustos</strong> → Percussão/Batidas (meio-frente)<br>
-            🌱 <strong>Raízes</strong> → Flauta/Agudos (frente)<br>
+            🌱 <strong>Dentes de Leão</strong> → Flauta/Agudos (frente)<br>
             <br>
             <small>Análise avançada: Meyda (timbre) + Essentia.js (ML)</small><br>
             <br>
@@ -238,7 +238,7 @@
             uniform float u_phaseOffset;    // Per-instance phase offset for desynchronization
 
             // Novos uniforms para movimentos específicos por planta
-            uniform float u_plantType;      // 0=trees, 1=flowers, 2=bushes, 3=roots
+            uniform float u_plantType;      // 0=trees, 1=flowers, 2=bushes, 3=dandelions
             uniform float u_vocalPitch;     // Flores: tom vocal (0-1)
             uniform float u_beatIntensity;  // Arbustos: força da batida (0 ou 1)
             uniform float u_timeSinceBeat;  // Arbustos: ms desde a batida
@@ -291,7 +291,7 @@
                     }
                 }
 
-                // === RAÍZES (3): Ramificações crescem com agudos ===
+                // === Dentes de Leão (3): Ramificações crescem com agudos ===
                 else {
                     // Crescimento nas extremidades (bordas/pontas)
                     float distanceFromCenter = length(aTexCoord - vec2(0.5, 0.5));
@@ -369,13 +369,10 @@
             varying vec2 vUv;
 
             void main() {
-                // Compute UV from world space position for consistent gradient
-                // Ground plane is width*2 wide and 800 deep, rotated 90° around X
-                // After rotation, Y becomes depth direction for gradient
-                vUv = vec2(
-                    (aPosition.x / 2000.0) + 0.5,  // X: horizontal mapping
-                    (aPosition.y / 800.0) + 0.5    // Y: depth mapping (gradient direction)
-                );
+                // Use built-in texture coordinates from p5.js
+                // aTexCoord already provides proper [0,1] UVs across the plane
+                // Y coordinate will be used for gradient (front to back)
+                vUv = aTexCoord;
 
                 vec4 positionVec4 = vec4(aPosition, 1.0);
                 gl_Position = uProjectionMatrix * uModelViewMatrix * positionVec4;
@@ -387,20 +384,8 @@
             varying vec2 vUv;
 
             void main() {
-                float groundLevel = 0.3;
-                float transitionWidth = 0.05;
-
-                vec3 grassColor = vec3(0.2, 0.5, 0.1);  // Verde grama
-                vec3 dirtColor = vec3(0.4, 0.26, 0.13); // Marrom terra
-
-                float groundMix = smoothstep(
-                    groundLevel - transitionWidth,
-                    groundLevel + transitionWidth,
-                    vUv.y
-                );
-
-                vec3 finalColor = mix(dirtColor, grassColor, groundMix);
-                gl_FragColor = vec4(finalColor, 1.0);
+                // Simple red test
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
         `;
 
