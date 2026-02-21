@@ -30,6 +30,12 @@ let nuvens = [];
 // Debug overlay
 let debugVisivel = true;
 
+// Caminhada musical
+let velocidadeCaminhada = 0;
+
+// Trilha no chao
+let trilhaLinhas = [];
+
 function preload() {
     sheetArvores = loadImage('trees.png');
     sheetFlores = loadImage('flowers.png');
@@ -59,6 +65,9 @@ function setup() {
 
     // Criar nuvens
     criarNuvens();
+
+    // Criar marcas de trilha no chao
+    criarTrilha();
 
     // Listener de upload
     document.getElementById('audio-file').addEventListener('change', (e) => {
@@ -115,6 +124,66 @@ function criarNuvens() {
     }
 }
 
+function criarTrilha() {
+    trilhaLinhas = [];
+    for (let i = 0; i < 10; i++) {
+        trilhaLinhas.push({ x: random(0, width) });
+    }
+}
+
+function reciclarPlantas() {
+    const cfg = CONFIG.caminhada;
+    const linhaChao = height * 0.72;
+
+    for (let a of jardim.arvores) {
+        if (a.x < cfg.limiteEsquerda) {
+            a.x = width + random(cfg.spawnDireita.min, cfg.spawnDireita.max);
+            a.y = linhaChao + random(-10, 10);
+            a.sprite = random(spritesMap.arvores);
+            a.rotacao = 0;
+            a.escalaAtual = a.escalaBase;
+            a.escalaX = 1;
+            a.escalaY = 1;
+        }
+    }
+
+    for (let b of jardim.arbustos) {
+        if (b.x < cfg.limiteEsquerda) {
+            b.x = width + random(cfg.spawnDireita.min, cfg.spawnDireita.max);
+            b.y = linhaChao + random(-10, 10);
+            b.sprite = random(spritesMap.arbustos);
+            b.rotacao = 0;
+            b.escalaAtual = b.escalaBase;
+            b.escalaX = 1;
+            b.escalaY = 1;
+        }
+    }
+
+    for (let f of jardim.flores) {
+        if (f.x < cfg.limiteEsquerda) {
+            f.x = width + random(cfg.spawnDireita.min, cfg.spawnDireita.max);
+            f.y = linhaChao + random(-10, 10);
+            f.sprite = random(spritesMap.flores);
+            f.rotacao = 0;
+            f.escalaAtual = f.escalaBase;
+            f.escalaX = 1;
+            f.escalaY = 1;
+        }
+    }
+
+    for (let d of jardim.dentes) {
+        if (d.x < cfg.limiteEsquerda) {
+            d.x = width + random(cfg.spawnDireita.min, cfg.spawnDireita.max);
+            d.y = linhaChao + random(-10, 10);
+            d.sprite = random(spritesMap.dentes);
+            d.rotacao = 0;
+            d.escalaAtual = d.escalaBase;
+            d.escalaX = 1;
+            d.escalaY = 1;
+        }
+    }
+}
+
 function gerarCeuGradiente(energia) {
     if (!ceuGradiente) {
         ceuGradiente = createGraphics(1, height);
@@ -157,9 +226,17 @@ function draw() {
         image(ceuGradiente, 0, 0, width, height);
     }
 
-    // Nuvens — atras de tudo, sobre o gradiente
+    // Calcular velocidade da caminhada
+    if (gerenciador.tocando) {
+        velocidadeCaminhada = CONFIG.caminhada.velocidadeBase + (energiaAtual * CONFIG.caminhada.velocidadeMultiplier);
+    } else {
+        velocidadeCaminhada = 0;
+    }
+
+    // Nuvens — atras de tudo, sobre o gradiente (com parallax da caminhada)
     for (let nv of nuvens) {
         nv.atualizar(energiaAtual);
+        nv.x -= velocidadeCaminhada * CONFIG.parallax.nuvens;
         nv.desenhar();
     }
 
@@ -169,8 +246,31 @@ function draw() {
     fill(51, chaoG, 26);
     rect(0, height * 0.7, width, height * 0.3);
 
-    // Desenhar plantas em ordem de camadas (tras -> frente)
+    // Trilha no chao
+    const chaoY = height * 0.72;
+    stroke(0, 50);
+    strokeWeight(1);
+    for (let linha of trilhaLinhas) {
+        linha.x -= velocidadeCaminhada;
+        if (linha.x < 0) {
+            linha.x = width + random(50, 100);
+        }
+        line(linha.x, chaoY, linha.x, chaoY + 20);
+    }
+    noStroke();
+
+    // Plantas
     if (jardim) {
+        // Mover plantas com a caminhada
+        for (let a of jardim.arvores)  a.x -= velocidadeCaminhada;
+        for (let b of jardim.arbustos) b.x -= velocidadeCaminhada;
+        for (let f of jardim.flores)   f.x -= velocidadeCaminhada;
+        for (let d of jardim.dentes)   d.x -= velocidadeCaminhada;
+
+        // Reciclar plantas que sairam pela esquerda
+        reciclarPlantas();
+
+        // Reagir ao audio
         for (let a of jardim.arvores)  a.reagir(dados.graves.amplitude, dados.graves.onset);
         for (let b of jardim.arbustos) b.reagir(dados.percussao.amplitude, dados.percussao.onset);
         for (let f of jardim.flores)   f.reagir(dados.harmonia.amplitude, dados.harmonia.onset);
@@ -183,7 +283,8 @@ function draw() {
         for (let d of jardim.dentes)   d.desenhar();
     }
 
-    // Particulas dos dentes-de-leao
+    // Particulas dos dentes-de-leao (com scroll da caminhada)
+    for (let p of particulas) p.x -= velocidadeCaminhada;
     atualizarParticulas();
 
     // Debug panel
@@ -250,4 +351,5 @@ function windowResized() {
     gerarCeuGradiente(energiaAtual);
     jardim = criarJardim(spritesMap);
     criarNuvens();
+    criarTrilha();
 }

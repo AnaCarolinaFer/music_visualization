@@ -56,5 +56,14 @@ const CONFIG = {
         corTopEnergia: [60, 30, 120],
         corBottomEnergia: [180, 100, 80],
         responsividade: 0.05
+    },
+    caminhada: {
+        velocidadeBase: 1,
+        velocidadeMultiplier: 3,
+        limiteEsquerda: -200,
+        spawnDireita: { min: 50, max: 200 }
+    },
+    parallax: {
+        nuvens: 0.3
     }
 };
