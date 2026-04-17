@@ -271,7 +271,8 @@ function draw() {
         reciclarPlantas();
 
         // Reagir ao audio
-        for (let a of jardim.arvores)  a.reagir(dados.graves.amplitude, dados.graves.onset);
+
+        for (let a of jardim.arvores)  a.reagir(dados.graves.amplitude, dados.graves.onset, dados.graves.energia);
         for (let b of jardim.arbustos) b.reagir(dados.percussao.amplitude, dados.percussao.onset);
         for (let f of jardim.flores)   f.reagir(dados.harmonia.amplitude, dados.harmonia.onset);
         for (let d of jardim.dentes)   d.reagir(dados.agudos.amplitude, dados.agudos.onset);

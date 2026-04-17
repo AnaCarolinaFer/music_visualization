@@ -141,20 +141,31 @@ class Planta {
 class Arvore extends Planta {
     constructor(x, y, sprite, escalaBase) {
         super(x, y, sprite, escalaBase);
-        this.anguloAlvo = 0;
-        this.fase = random(TWO_PI);
-        this.velocidadeBase = CONFIG.arvore.velocidade + random(-0.005, 0.005);
+        this.fase = random(TWO_PI);  // fase para dessincronizar arvores
+        this.direcao = random() > 0.5 ? 1 : -1;
+        this.impulsoExtra = 0;  // impulso adicional do onset
     }
 
-    reagir(amplitude, _onset) {
+    reagir(amplitude, onset, energia = 0) {
         const cfg = CONFIG.arvore;
-        // Pendulo: sin oscila entre -1 e 1, modulado pela amplitude do audio
-        // Quanto mais graves, maior o angulo de balanco
-        const intensidade = map(amplitude, 0, 0.3, 0.02, 1.0, true);
-        this.anguloAlvo = sin(frameCount * this.velocidadeBase + this.fase)
-                        * cfg.anguloMax * intensidade;
-        // Lerp suave para movimento lento e organico
-        this.rotacao = lerp(this.rotacao, this.anguloAlvo, cfg.suavizacao);
+
+        // 1. BALANCO CONTINUO baseado na energia
+        const velocidadeOscilacao = cfg.velocidadeBase + (energia * cfg.velocidadeEnergia);
+        const anguloEnergia = energia * cfg.anguloBase;
+        const balancoContinuo = sin(frameCount * velocidadeOscilacao + this.fase) * anguloEnergia;
+
+        // 2. IMPULSO EXTRA do onset (decai com o tempo)
+        if (onset) {
+            this.impulsoExtra = cfg.impulsoOnset;
+            this.direcao *= -1;  // inverte direcao no onset
+        }
+        this.impulsoExtra *= cfg.decaimentoImpulso;
+
+        // 3. ROTACAO FINAL = balanco continuo + impulso extra
+        const rotacaoAlvo = balancoContinuo + (this.impulsoExtra * this.direcao);
+
+        // 4. Suavizacao
+        this.rotacao = lerp(this.rotacao, rotacaoAlvo, cfg.suavizacao);
     }
 }
 

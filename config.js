@@ -3,9 +3,17 @@
  */
 const CONFIG = {
     arvore: {
-        anguloMax: 0.25,       // radianos max de rotacao
-        velocidade: 0.025,     // velocidade oscilacao pendular
-        suavizacao: 0.08       // lerp (mais baixo = mais suave/lento)
+        // Balanco continuo (energia)
+        anguloBase: 0.12,         // angulo maximo do balanco continuo
+        velocidadeBase: 0.015,    // velocidade minima da oscilacao
+        velocidadeEnergia: 0.03,  // quanto energia aumenta a velocidade
+
+        // Impulso extra (onset)
+        impulsoOnset: 0.2,        // impulso adicional quando onset
+        decaimentoImpulso: 0.95,  // decaimento do impulso extra
+
+        // Suavizacao geral
+        suavizacao: 0.06
     },
     flor: {
         escalaMax: 0.5,        // quanto cresce no pulso (multiplicado pela amplitude)

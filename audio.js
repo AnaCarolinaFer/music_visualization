@@ -10,7 +10,7 @@
 class GerenciadorAudio {
     constructor() {
         this.stems = {
-            graves:    { audio: null, fft: null, amp: null, amplitude: 0, amplitudeAnterior: 0, onset: false },
+            graves:    { audio: null, fft: null, amp: null, amplitude: 0, amplitudeAnterior: 0, onset: false, energiaAnterior: 0 },
             harmonia:  { audio: null, fft: null, amp: null, amplitude: 0, amplitudeAnterior: 0, onset: false },
             percussao: { audio: null, fft: null, amp: null, amplitude: 0, amplitudeAnterior: 0, onset: false },
             agudos:    { audio: null, fft: null, amp: null, amplitude: 0, amplitudeAnterior: 0, onset: false }
@@ -133,8 +133,10 @@ class GerenciadorAudio {
                 const nivel = stem.amp.getLevel();
                 // Suavizar amplitude para movimentos mais fluidos
                 stem.amplitude = lerp(stem.amplitude, nivel, 0.3);
-                // Onset detectado quando ha salto significativo
-                stem.onset = (nivel - stem.amplitudeAnterior) > threshold;
+                // Onset padrao para todos EXCETO graves
+                if (nome !== 'graves') {
+                    stem.onset = (nivel - stem.amplitudeAnterior) > threshold;
+                }
             } else {
                 stem.amplitude = 0;
                 stem.onset = false;
@@ -144,6 +146,25 @@ class GerenciadorAudio {
                 amplitude: stem.amplitude,
                 onset: stem.onset
             };
+        }
+
+        // ONSET ESPECIFICO PARA GRAVES — baseado em delta da energia do FFT
+        if (this.stems.graves.fft && this.tocando) {
+            this.stems.graves.fft.analyze();
+            const energiaBass   = this.stems.graves.fft.getEnergy("bass");
+            const energiaLowMid = this.stems.graves.fft.getEnergy("lowMid");
+            const energiaAtual  = (energiaBass * 0.7 + energiaLowMid * 0.3) / 255;
+
+            const deltaEnergia = energiaAtual - this.stems.graves.energiaAnterior;
+            const thresholdGraves = 0.03;
+            this.stems.graves.onset = deltaEnergia > thresholdGraves;
+            this.stems.graves.energiaAnterior = energiaAtual;
+
+            resultado.graves.energia = energiaAtual;
+            resultado.graves.onset   = this.stems.graves.onset;
+
+        } else {
+            resultado.graves.energia = 0;
         }
 
         return resultado;
