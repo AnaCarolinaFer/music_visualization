@@ -27,15 +27,15 @@ class Semente {
     }
 
     desenhar() {
-        let alpha = this.vida;
-        // Corpo da semente
+        const wx = this.x - width / 2;
+        const wy = this.y - height / 2;
+        const alpha = this.vida;
         noStroke();
         fill(255, 255, 240, alpha);
-        ellipse(this.x, this.y, this.tamanho, this.tamanho * 1.3);
-        // Filamento (linha fina saindo para cima)
+        ellipse(wx, wy, this.tamanho, this.tamanho * 1.3);
         stroke(255, 255, 220, alpha * 0.7);
         strokeWeight(0.5);
-        line(this.x, this.y, this.x + this.vx * 2, this.y - this.tamanho * 2);
+        line(wx, wy, wx + this.vx * 2, wy - this.tamanho * 2);
     }
 
     morta() {

@@ -4,20 +4,31 @@
 const CONFIG = {
     arvore: {
         // Balanco continuo (energia)
-        anguloBase: 0.12,         // angulo maximo do balanco continuo
-        velocidadeBase: 0.015,    // velocidade minima da oscilacao
-        velocidadeEnergia: 0.03,  // quanto energia aumenta a velocidade
+        anguloBase: 0.12,
+        velocidadeBase: 0.015,
+        velocidadeEnergia: 0.03,
 
         // Impulso extra (onset)
-        impulsoOnset: 0.2,        // impulso adicional quando onset
-        decaimentoImpulso: 0.95,  // decaimento do impulso extra
+        impulsoOnset: 0.2,
+        decaimentoImpulso: 0.95,
 
         // Suavizacao geral
-        suavizacao: 0.06
+        suavizacao: 0.06,
+
+        // Bezier
+        bendMax: 0.35,
+        segmentos: 8,
+        alturaFator: 1.0
     },
     flor: {
-        escalaMax: 0.5,        // quanto cresce no pulso (multiplicado pela amplitude)
-        responsividade: 0.12   // lerp
+        escalaMax: 0.5,
+        responsividade: 0.12,
+
+        // Bezier
+        bendMax: 0.45,
+        segmentos: 8,
+        amplitudeMin: 0.4,   // fator minimo para manter balanco visivel mesmo com amplitude baixa
+        amplitudeMult: 8     // multiplica amplitude para escalar a intensidade
     },
     arbusto: {
         compressaoMax: 0.35,   // quanto achata verticalmente no onset
