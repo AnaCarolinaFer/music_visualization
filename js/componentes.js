@@ -51,4 +51,14 @@ function criarItemMusica({ hash, nomeArquivo }) {
     return div;
 }
 
+function criarItemFaixaPronta({ slug, nome }) {
+    const div = document.createElement('div');
+    div.className = 'item-musica';
+    div.innerHTML = `
+        <span class="nome-item">${nome}</span>
+        <button onclick="carregarFaixaPronta('${slug}', '${nome}')" title="Tocar">▶</button>
+    `;
+    return div;
+}
+
 document.addEventListener('DOMContentLoaded', () => renderizarTela('tpl-tela-inicial'));

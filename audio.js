@@ -82,7 +82,10 @@ class GerenciadorAudio {
             document.getElementById('volume-area').style.display = 'flex';
 
         } catch (err) {
-            statusEl.textContent = 'Erro: ' + err.message;
+            const servidorIndisponivel = err instanceof TypeError;
+            statusEl.textContent = servidorIndisponivel
+                ? TEXTOS.explorar.erroServidorIndisponivel
+                : 'Erro: ' + err.message;
             console.error('Erro na separacao:', err);
         }
     }

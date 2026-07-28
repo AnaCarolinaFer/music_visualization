@@ -48,5 +48,6 @@ server/output/*
 !server/uploads/.gitkeep
 !server/output/.gitkeep
 
-# Arquivos orfaos / teste
+# Musicas originais completas (apenas os stems separados vao para o repo)
 musica.mp3
+TERIYAKI.mp3

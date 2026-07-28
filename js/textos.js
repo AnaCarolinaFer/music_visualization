@@ -28,6 +28,10 @@ const TEXTOS = {
         adicionarMusica: 'Adicionar música',
         confirmarRemover: 'Remover esta música do cache?',
         debugHint: 'D: debug | Espaço: play/pause',
+        faixasProntas: 'Faixas prontas',
+        carregandoFaixaPronta: 'Carregando faixa...',
+        prontoFaixaPronta: 'Pronto!',
+        erroServidorIndisponivel: 'Servidor de separação indisponível. Tente uma das faixas prontas na Biblioteca.',
     },
     estudo: {
         titulo: 'Laboratório das plantas',

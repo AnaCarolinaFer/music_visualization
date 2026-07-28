@@ -93,6 +93,10 @@
                 <button class="sidebar-fechar" onclick="fecharSidebar()">✕</button>
             </div>
             <div id="pane-biblioteca" class="tab-pane">
+                <div id="secao-faixas-prontas" style="display:none">
+                    <p class="sidebar-secao-titulo" data-i18n="explorar.faixasProntas">Faixas prontas</p>
+                    <div id="lista-faixas-prontas"></div>
+                </div>
                 <p id="sidebar-sem-musicas" data-i18n="explorar.semMusicas">Nenhuma música salva ainda.</p>
                 <div id="lista-musicas-conteudo"></div>
                 <button id="btn-adicionar-musica" onclick="document.getElementById('audio-file').click()">

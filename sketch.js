@@ -85,7 +85,7 @@ function setup() {
 }
 
 // Carrega stems a partir de blobs cacheados, sem tocar em audio.js
-async function _carregarStemsDoBlobs(blobs) {
+async function _carregarStemsDoBlobs(blobs, mime = 'audio/wav') {
     const statusEl = document.getElementById('status');
     if (statusEl) statusEl.textContent = TEXTOS.explorar.carregandoCache;
     if (gerenciador.blobUrls) { for (const u of Object.values(gerenciador.blobUrls)) URL.revokeObjectURL(u); }
@@ -93,7 +93,7 @@ async function _carregarStemsDoBlobs(blobs) {
     gerenciador.blobUrls    = {};
     const nomes = ['graves', 'harmonia', 'percussao', 'agudos'];
     const promessas = nomes.map(nome => new Promise((resolve, reject) => {
-        const blob    = new Blob([blobs[nome]], { type: 'audio/wav' });
+        const blob    = new Blob([blobs[nome]], { type: mime });
         const blobUrl = URL.createObjectURL(blob);
         gerenciador.blobUrls[nome] = blobUrl;
         gerenciador.stems[nome].audio = loadSound(blobUrl,
@@ -139,6 +139,70 @@ async function atualizarListaMusicas() {
     for (const m of lista) conteudoEl.appendChild(criarItemMusica(m));
 }
 
+// ============================================================
+// Faixas prontas — stems pré-separados, servidos como arquivos
+// estáticos (não precisam do servidor Flask/Spleeter)
+// ============================================================
+
+let _faixasProntas = null;
+
+async function carregarListaFaixasProntas() {
+    const secaoEl = document.getElementById('secao-faixas-prontas');
+    const listaEl = document.getElementById('lista-faixas-prontas');
+    if (!secaoEl || !listaEl) return;
+
+    if (_faixasProntas === null) {
+        try {
+            const res = await fetch('faixas-prontas/manifest.json');
+            _faixasProntas = res.ok ? await res.json() : [];
+        } catch (e) {
+            _faixasProntas = [];
+        }
+    }
+
+    secaoEl.style.display = _faixasProntas.length > 0 ? 'flex' : 'none';
+    listaEl.innerHTML = '';
+    for (const f of _faixasProntas) listaEl.appendChild(criarItemFaixaPronta(f));
+}
+
+async function carregarFaixaPronta(slug, nome) {
+    if (gerenciador?.pronto && gerenciador.tocando) {
+        gerenciador.togglePlay();
+        const playBtn = document.getElementById('play-btn');
+        if (playBtn) playBtn.innerHTML = TEXTOS.explorar.play;
+    }
+
+    const statusEl = document.getElementById('status');
+    if (statusEl) statusEl.textContent = TEXTOS.explorar.carregandoFaixaPronta;
+
+    const nomes = ['graves', 'harmonia', 'percussao', 'agudos'];
+    try {
+        const buffers = await Promise.all(nomes.map(n =>
+            fetch(`faixas-prontas/${slug}/${n}.mp3`).then(r => {
+                if (!r.ok) throw new Error(`${n}.mp3 não encontrado`);
+                return r.arrayBuffer();
+            })
+        ));
+        const blobs = Object.fromEntries(nomes.map((n, i) => [n, buffers[i]]));
+        await _carregarStemsDoBlobs(blobs, 'audio/mpeg');
+
+        for (const [f, ativo] of Object.entries(FILTROS_STEM)) {
+            if (!ativo) {
+                const stemKey = f === 'melodia' ? 'harmonia' : f;
+                gerenciador?.stems?.[stemKey]?.audio?.setVolume?.(0);
+            }
+        }
+
+        const nomeEl = document.getElementById('nome-musica');
+        if (nomeEl) nomeEl.textContent = `"${nome}"`;
+        if (statusEl) statusEl.textContent = TEXTOS.explorar.prontoFaixaPronta;
+        fecharSidebar();
+    } catch (err) {
+        if (statusEl) statusEl.textContent = 'Erro ao carregar faixa: ' + err.message;
+        console.error('Erro ao carregar faixa pronta:', err);
+    }
+}
+
 async function tocarMusicaCache(hash) {
     const cached = await _idbObter(hash);
     if (!cached) return;
@@ -176,6 +240,7 @@ function abrirSidebar() {
     if (btnMenu) btnMenu.textContent = '‹';
     document.body.classList.add('sidebar-aberta');
     atualizarListaMusicas();
+    carregarListaFaixasProntas();
     atualizarCheckboxesFiltros();
 }
 
