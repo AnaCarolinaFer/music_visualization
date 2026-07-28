@@ -13,7 +13,7 @@ A música é separada em 4 "stems" (graves, harmonia, percussão, agudos) e cada
 
 ## Demo
 
-🔗 **[Abrir o Jardim Musical](#)** — já vem com faixas prontas, não precisa instalar nada.
+🔗 **[Abrir o Jardim Musical](https://anacarolinafer.github.io/music_visualization/)** — já vem com faixas prontas, não precisa instalar nada.
 
 ## Modos
 
