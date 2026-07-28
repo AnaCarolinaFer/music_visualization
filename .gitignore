@@ -37,9 +37,10 @@ server/__pycache__/
 __pycache__/
 *.pyc
 
-# Modelo ML Spleeter (157MB)
+# Modelo ML Spleeter (157MB) e backups locais grandes
 pretrained_models/
 server/pretrained_models/
+*.zip
 
 # Arquivos temporarios de upload/output
 server/uploads/*

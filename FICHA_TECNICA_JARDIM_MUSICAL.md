@@ -687,5 +687,4 @@ const CONFIG = {
 
 ---
 
-*Documento preparado para implementação no Claude Code.*
 *Versão 2.0 — Revisada com foco em viabilidade e clareza de implementação.*
