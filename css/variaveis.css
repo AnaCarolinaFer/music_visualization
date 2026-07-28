@@ -1,0 +1,27 @@
+:root {
+    --ceu-azul:           #97D9EE;
+    --ceu-amarelo:        #FCE9A7;
+    --verde-folha:        #B9D88A;
+    --verde-grama:        #87C158;
+    --verde-escuro:       #3C8A3E;
+    --laranja-card:       #F4C58A;
+    --laranja-escuro:     #C66628;
+    --roxo-escuro:        #5D3A9B;
+    --laranja-pill-ativa: #F39C5A;
+    --lilas:              #B49FE3;
+    --lilas-claro:        #E5DCF5;
+    --lilas-tab:          #9A7DD6;
+    --rosa-botao:         #F8BFC9;
+    --marrom-moldura:     #8B5C3B;
+    --creme-fundo:        #FFF5EC;
+    --branco-papel:       #FFFFFF;
+    --texto:              #2D3E2F;
+    --texto-claro:        #6B7D6E;
+
+    --fonte-titulo: 'Fredoka', sans-serif;
+    --fonte-corpo:  'Nunito', sans-serif;
+
+    --raio-pequeno: 8px;
+    --raio-medio:   16px;
+    --raio-grande:  24px;
+}

@@ -19,6 +19,8 @@ class GerenciadorAudio {
         this.tocando = false;
         this.volume = 1.0;
         this.serverUrl = 'http://localhost:5000';
+        this.stemsBuffer = null;
+        this.blobUrls    = null;
     }
 
     /**
@@ -27,6 +29,8 @@ class GerenciadorAudio {
     async enviarParaSeparacao(arquivo) {
         const statusEl = document.getElementById('status');
         statusEl.textContent = 'Enviando musica para separacao... pode levar 1-2 minutos';
+
+        if (this.blobUrls) { for (const u of Object.values(this.blobUrls)) URL.revokeObjectURL(u); }
 
         const formData = new FormData();
         formData.append('file', arquivo);
@@ -45,11 +49,15 @@ class GerenciadorAudio {
 
             statusEl.textContent = 'Carregando stems de audio...';
 
-            // Carregar cada stem com loadSound do p5.js
+            // Capturar ArrayBuffers antes do loadSound — necessário para o cache IndexedDB
             const nomes = ['graves', 'harmonia', 'percussao', 'agudos'];
-            const promessas = nomes.map(nome => {
+            const buffers = await Promise.all(nomes.map(n => fetch(this.serverUrl + data.stems[n]).then(r => r.arrayBuffer())));
+            this.stemsBuffer = Object.fromEntries(nomes.map((n, i) => [n, buffers[i]]));
+            this.blobUrls    = {};
+            const promessas = nomes.map((nome, i) => {
                 return new Promise((resolve, reject) => {
-                    const url = this.serverUrl + data.stems[nome];
+                    const url = URL.createObjectURL(new Blob([buffers[i]], { type: 'audio/wav' }));
+                    this.blobUrls[nome] = url;
                     this.stems[nome].audio = loadSound(url,
                         () => resolve(nome),
                         (err) => reject(new Error(`Erro ao carregar ${nome}: ${err}`))

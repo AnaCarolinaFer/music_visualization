@@ -1,0 +1,200 @@
+/* Botões circulares (canto superior direito) */
+#botoes-circulares {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 50;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    transition: right 0.3s ease;
+}
+
+body.sidebar-aberta #botoes-circulares {
+    right: 336px;
+}
+
+.btn-circular {
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.btn-circular:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.btn-circular:active { transform: scale(0.94); }
+
+/* Barra inferior */
+#barra-inferior {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: var(--verde-grama);
+    z-index: 20;
+}
+
+#nome-musica {
+    position: absolute;
+    left: 16px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    font-family: var(--fonte-corpo);
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.9;
+    max-width: 35%;
+}
+
+#controles-centro {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#play-btn {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: var(--verde-escuro);
+    color: white;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transition: transform 0.1s;
+}
+
+#play-btn:hover  { transform: scale(1.08); }
+#play-btn:active { transform: scale(0.94); }
+
+#volume-area {
+    position: absolute;
+    right: 16px;
+    top: 0;
+    bottom: 0;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+#volume-area label { font-size: 16px; }
+
+#volume-slider {
+    width: 100px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: transparent;
+    outline: none;
+}
+
+#volume-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    background: var(--verde-escuro);
+    border-radius: 2px;
+}
+
+#volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--verde-escuro);
+    margin-top: -5px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+#volume-slider::-moz-range-track {
+    height: 4px;
+    background: var(--verde-escuro);
+    border-radius: 2px;
+}
+
+#volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--verde-escuro);
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Debug panel */
+#debug-panel {
+    position: fixed;
+    top: 80px;
+    left: 16px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 16px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 13px;
+    z-index: 10;
+    min-width: 280px;
+}
+
+.stem-bar { margin: 6px 0; }
+
+.stem-bar .label {
+    display: inline-block;
+    width: 100px;
+}
+
+.stem-bar .bar-bg {
+    display: inline-block;
+    width: 140px;
+    height: 14px;
+    background: #333;
+    border-radius: 4px;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+.stem-bar .bar-fill { height: 100%; border-radius: 4px; transition: width 0.05s; }
+
+.stem-bar .value {
+    display: inline-block;
+    width: 40px;
+    text-align: right;
+    font-size: 12px;
+}
+
+#graves-bar    .bar-fill { background: #8B4513; }
+#melodia-bar   .bar-fill { background: #e91e63; }
+#percussao-bar .bar-fill { background: #4caf50; }
+#agudos-bar    .bar-fill { background: #ffc107; }
+
+#fps { margin-top: 8px; font-size: 12px; color: #888; }
+.debug-hint { margin-top: 6px; font-size: 11px; color: #666; }

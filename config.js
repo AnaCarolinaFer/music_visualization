@@ -9,37 +9,55 @@ const CONFIG = {
         velocidadeEnergia: 0.03,
 
         // Impulso extra (onset)
-        impulsoOnset: 0.2,
-        decaimentoImpulso: 0.95,
+        impulsoOnset: 0.55,
+        decaimentoImpulso: 0.88,
 
         // Suavizacao geral
-        suavizacao: 0.06,
+        suavizacao: 0.14,
 
         // Bezier
-        bendMax: 0.35,
+        bendMax: 0.75,
         segmentos: 8,
-        alturaFator: 1.0
+        alturaFator: 1.0,
+
+        // Tremor: vibração rápida da copa (taxaDecaimento alta)
+        tremorLimiar:     0.006,
+        tremorGanho:      4.0,
+        tremorMax:        0.20,
+        tremorDecaimento: 0.92,
+        tremorFreq:       0.5,
+
+        // Balanço: oscilação lateral lenta (variabilidade alta)
+        balancoFator: 4.0,
+        balancoFreq:  0.05,
     },
     flor: {
         escalaMax: 0.5,
-        responsividade: 0.12,
-
-        // Bezier
-        bendMax: 0.45,
+        responsividade: 0.10,
         segmentos: 8,
-        amplitudeMin: 0.4,   // fator minimo para manter balanco visivel mesmo com amplitude baixa
-        amplitudeMult: 8     // multiplica amplitude para escalar a intensidade
+        amplitudeMin: 0.07,
+        esticamentoAmpl: 1.5,       // legado — não usado
+        esticamentoQuadAmpl: 10.0,  // amplitude² * fator = stretch (capped at escalaYMax-1)
+        escalaYMax: 1.55,           // max vertical stretch (55% above rest)
+        respiracaoBase: 0.04,
+        respiracaoFreq: 0.025,
+        escalaXCompressao: 0.167
     },
     arbusto: {
-        compressaoMax: 0.35,   // quanto achata verticalmente no onset
-        retorno: 0.15,         // velocidade de retorno (elastico)
-        amplitudeMin: 0.02     // amplitude minima para reagir continuamente
+        compressaoMax: 0.40,
+        retorno: 0.15,
+        amplitudeMin: 0.02,
+        fatorPico: 4.0,           // legado — não usado
+        fatorPulsoQuad: 100,      // (pico-0.03)² * fator = intensidade do squash
     },
     dente: {
-        particulas: 4,         // quantidade de sementes por onset
-        vidaParticula: 255,    // frames ate morrer
-        decremento: 2.5,       // vida perdida por frame
-        emissaoContinua: 1     // particulas por frame quando amplitude alta
+        particulas: 4,            // legado
+        vidaParticula: 255,
+        decremento: 2.5,
+        emissaoContinua: 1,
+        quantidadePorPico: 30,    // legado — não usado
+        dispersaoFator: 10,
+        brilhoFator: 80,          // amplitude × variabilidade × fator = intensidade do brilho da coroa
     },
     audio: {
         onsetThreshold: 0.04,  // diferenca de amplitude para detectar onset
@@ -80,9 +98,42 @@ const CONFIG = {
         velocidadeBase: 1,
         velocidadeMultiplier: 3,
         limiteEsquerda: -200,
-        spawnDireita: { min: 50, max: 200 }
+        spawnDireita: { min: 50, max: 600 }
     },
     parallax: {
         nuvens: 0.3
+    },
+    sprites: {
+        thresholdPadrao: 0x12,
+        thresholdPorEspecie: {
+            arvore:  0x20,
+            flor:    0x12,
+            arbusto: 0x18,
+            dente:   0x12
+        },
+        versaoCache: 3
+    },
+    animacao: {
+        velocidadeNascimentoMin: 0.15,
+        velocidadeNascimentoMax: 0.35,
+        velocidadeMorteMin: 0.20,
+        velocidadeMorteMax: 0.40,
+        framesDanca: 3
+    },
+    crescimento: {
+        habilitado: false
+    },
+    vida: {
+        janelaMediaFrames: 60,
+        limiarNascimento:  0.05,
+        limiarMorte:       0.02,
+        framesMinimoVida:  90,
+    },
+    profundidade: {
+        //            yMin  yMax   fatorEscala (±% da escalaBase com a posição Y)
+        arvore:  { yMin: 0.72, yMax: 0.76, fator: 0.20 },
+        arbusto: { yMin: 0.76, yMax: 0.82, fator: 0.15 },
+        flor:    { yMin: 0.80, yMax: 0.87, fator: 0.12 },
+        dente:   { yMin: 0.83, yMax: 0.91, fator: 0.10 }
     }
 };

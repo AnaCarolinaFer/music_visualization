@@ -1,0 +1,185 @@
+/* Modal Área do Professor */
+#modal-professor-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+#modal-professor {
+    background: var(--branco-papel);
+    width: 700px;
+    max-height: 80vh;
+    border-radius: var(--raio-medio);
+    padding: 28px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+}
+
+#modal-fechar {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--texto-claro);
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.1s;
+    line-height: 1;
+}
+
+#modal-fechar:hover { background: #f0f0f0; }
+
+#modal-header {
+    padding-right: 40px;
+}
+
+#modal-titulo {
+    font-family: var(--fonte-titulo);
+    font-weight: 600;
+    font-size: 24px;
+    color: var(--lilas-tab);
+    display: block;
+    margin-bottom: 6px;
+}
+
+#modal-subtitulo {
+    font-family: var(--fonte-corpo);
+    font-size: 14px;
+    color: var(--texto-claro);
+    margin: 0;
+}
+
+/* Tabs do modal */
+#modal-tabs-container {
+    display: flex;
+    border-bottom: 2px solid var(--lilas-claro);
+    flex-shrink: 0;
+}
+
+.modal-tab {
+    padding: 10px 18px;
+    background: none;
+    border: none;
+    font-family: var(--fonte-corpo);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--texto-claro);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.modal-tab:hover { color: var(--lilas-tab); }
+
+.modal-tab.ativa {
+    color: var(--lilas-tab);
+}
+
+.modal-tab.ativa::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--lilas-tab);
+}
+
+/* Panes do modal */
+.modal-pane {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+    padding-right: 4px;
+}
+
+/* Scrollbar discreta */
+.modal-pane::-webkit-scrollbar { width: 4px; }
+.modal-pane::-webkit-scrollbar-thumb { background: var(--lilas-claro); border-radius: 2px; }
+
+/* Conteúdo do modal */
+.modal-subtitulo-secao {
+    font-family: var(--fonte-corpo);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--lilas-tab);
+    margin: 0;
+}
+
+.modal-paragrafo {
+    font-family: var(--fonte-corpo);
+    font-size: 14px;
+    color: var(--texto);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Tab Legenda — tabela */
+.modal-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--fonte-corpo);
+    font-size: 14px;
+}
+
+.modal-tabela th {
+    background: var(--lilas-tab);
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.modal-tabela th:first-child { border-radius: 8px 0 0 8px; }
+.modal-tabela th:last-child  { border-radius: 0 8px 8px 0; }
+
+.modal-tabela td {
+    padding: 10px 14px;
+    color: var(--texto);
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+.modal-tabela tr:nth-child(even) td { background: var(--lilas-claro); }
+
+/* Tab Atividades — cards */
+.card-atividade {
+    border-left: 4px solid var(--lilas-tab);
+    background: var(--lilas-claro);
+    border-radius: 0 var(--raio-pequeno) var(--raio-pequeno) 0;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.card-atividade-titulo {
+    font-family: var(--fonte-corpo);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--lilas-tab);
+}
+
+.card-atividade-desc {
+    font-family: var(--fonte-corpo);
+    font-size: 13px;
+    color: var(--texto);
+    line-height: 1.5;
+    margin: 0;
+}

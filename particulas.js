@@ -4,14 +4,13 @@
  */
 
 class Semente {
-    constructor(x, y) {
+    constructor(x, y, dispersao = 1, opcoes = {}) {
         this.x = x;
         this.y = y;
-        this.vx = random(-1.5, 1.5);
-        this.vy = random(-3, -0.8);
+        this.vx = random(-1.5, 1.5) * dispersao;
+        this.vy = random(-3, -0.8) * (opcoes.velocidadeBase ?? 1.0);
         this.vida = CONFIG.dente.vidaParticula;
-        this.tamanho = random(2, 5);
-        // Leve ondulacao horizontal
+        this.tamanho = random(2, 5) * (opcoes.tamanho ?? 1.0);
         this.ondulacao = random(0.01, 0.04);
         this.fase = random(TWO_PI);
     }
@@ -56,10 +55,16 @@ function atualizarParticulas() {
     }
 }
 
-function emitirSementes(x, y, quantidade) {
+function emitirSementes(x, y, quantidade, dispersao = 1) {
     const max = CONFIG.limites.maxParticulas;
     const qtd = Math.min(quantidade, max - particulas.length);
     for (let i = 0; i < qtd; i++) {
-        particulas.push(new Semente(x + random(-10, 10), y - random(20, 60)));
+        particulas.push(new Semente(x + random(-10, 10), y - random(20, 60), dispersao));
     }
+}
+
+function emitirSemente(x, y, opcoes = {}) {
+    if (particulas.length >= CONFIG.limites.maxParticulas) return;
+    const dispersao = opcoes.dispersao ?? 1;
+    particulas.push(new Semente(x + random(-10, 10), y - random(20, 60), dispersao, opcoes));
 }

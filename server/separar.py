@@ -1,7 +1,7 @@
 """
 Módulo de separação de áudio usando Spleeter.
 Separa uma música em 4 stems: bass, drums, vocals, other
-Renomeia para: agudos, percussao, harmonia, graves
+Renomeia para: graves, percussao, harmonia, agudos
 """
 
 import os
@@ -39,10 +39,10 @@ def separar_musica(arquivo_entrada, pasta_saida, session_id):
 
     # Mapeamento de nomes Spleeter → nomes do projeto
     mapeamento = {
-        'other.wav': 'graves.wav',
-        'drums.wav': 'percussao.wav',
+        'bass.wav':   'graves.wav',
+        'drums.wav':  'percussao.wav',
         'vocals.wav': 'harmonia.wav',
-        'bass.wav': 'agudos.wav'
+        'other.wav':  'agudos.wav'
     }
 
     # Renomear e mover arquivos para a pasta da sessão

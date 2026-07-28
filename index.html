@@ -4,176 +4,203 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jardim Musical</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #1a1a2e;
-            color: #eee;
-            overflow: hidden;
-        }
-
-        #ui-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 10;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-        }
-
-        #upload-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        #upload-area label {
-            padding: 10px 20px;
-            background: #4a90d9;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-
-        #upload-area label:hover {
-            background: #357abd;
-        }
-
-        #upload-area input[type="file"] {
-            display: none;
-        }
-
-        #status {
-            font-size: 14px;
-            color: #ccc;
-        }
-
-        #play-btn {
-            padding: 10px 20px;
-            background: #2ecc71;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            display: none;
-            transition: background 0.2s;
-        }
-
-        #play-btn:hover { background: #27ae60; }
-
-        #play-btn:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
-
-        #debug-panel {
-            position: fixed;
-            top: 70px;
-            right: 16px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 16px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 13px;
-            z-index: 10;
-            min-width: 280px;
-        }
-
-        .stem-bar {
-            margin: 6px 0;
-        }
-
-        .stem-bar .label {
-            display: inline-block;
-            width: 100px;
-        }
-
-        .stem-bar .bar-bg {
-            display: inline-block;
-            width: 140px;
-            height: 14px;
-            background: #333;
-            border-radius: 4px;
-            vertical-align: middle;
-            overflow: hidden;
-        }
-
-        .stem-bar .bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.05s;
-        }
-
-        .stem-bar .value {
-            display: inline-block;
-            width: 40px;
-            text-align: right;
-            font-size: 12px;
-        }
-
-        #graves-bar .bar-fill { background: #8B4513; }
-        #harmonia-bar .bar-fill { background: #e91e63; }
-        #percussao-bar .bar-fill { background: #4caf50; }
-        #agudos-bar .bar-fill { background: #ffc107; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/variaveis.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/componentes/card-planta.css">
+    <link rel="stylesheet" href="css/componentes/sidebar.css">
+    <link rel="stylesheet" href="css/telas/home.css">
+    <link rel="stylesheet" href="css/telas/explorar.css">
+    <link rel="stylesheet" href="css/telas/laboratorio.css">
+    <link rel="stylesheet" href="css/componentes/modal.css">
 </head>
 <body>
-    <div id="ui-overlay">
-        <div id="upload-area">
-            <label for="audio-file">Escolher Musica</label>
-            <input type="file" id="audio-file" accept=".mp3,.wav,.ogg,.flac,.m4a">
-        </div>
-        <span id="status">Envie uma musica para comecar</span>
-        <button id="play-btn" onclick="togglePlay()">Play</button>
-        <div id="volume-area" style="display:none; align-items:center; gap:8px;">
-            <label for="volume-slider" style="font-size:13px;">Vol</label>
-            <input type="range" id="volume-slider" min="0" max="100" value="100"
-                   style="width:100px; cursor:pointer;" oninput="ajustarVolume(this.value)">
-        </div>
-    </div>
 
-    <div id="debug-panel">
-        <div><strong>Amplitudes dos Stems</strong></div>
-        <div class="stem-bar" id="graves-bar">
-            <span class="label">Graves</span>
-            <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
-            <span class="value">0.00</span>
-        </div>
-        <div class="stem-bar" id="harmonia-bar">
-            <span class="label">Harmonia</span>
-            <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
-            <span class="value">0.00</span>
-        </div>
-        <div class="stem-bar" id="percussao-bar">
-            <span class="label">Percussao</span>
-            <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
-            <span class="value">0.00</span>
-        </div>
-        <div class="stem-bar" id="agudos-bar">
-            <span class="label">Agudos</span>
-            <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
-            <span class="value">0.00</span>
-        </div>
-        <div id="fps" style="margin-top:8px; font-size:12px; color:#888;">FPS: --</div>
-        <div style="margin-top:6px; font-size:11px; color:#666;">D: toggle debug | Space: play/pause</div>
-    </div>
+    <!-- Canvas WEBGL persistente (criado pelo p5.js em setup) -->
+    <div id="canvas-container"></div>
 
+    <!-- Camada de UI — substituída a cada troca de tela -->
+    <div id="app"></div>
+
+    <!-- ======================================================
+         Templates das telas
+         ====================================================== -->
+
+    <template id="tpl-tela-inicial">
+        <div id="tela-inicial">
+            <button id="btn-professor" onclick="abrirModalProfessor()">
+                <span class="avatar">👩🏽‍🏫</span>
+                <span class="texto">
+                    <span class="linha1" data-i18n="home.professor">Área do professor</span>
+                    <span class="linha2" data-i18n="home.professorSub">Recursos e atividades</span>
+                </span>
+            </button>
+
+            <div id="home-centro">
+                <h1 data-i18n="home.titulo">JARDIM MUSICAL</h1>
+                <p data-i18n="home.subtitulo">Veja a música florescer em um jardim cheio de vida!</p>
+                <div id="home-cards">
+                    <button class="card-modo explorar" onclick="entrarModoJardim()">
+                        <span class="pictograma">🌳</span>
+                        <span class="card-texto">
+                            <span class="titulo" data-i18n="home.botaoJardim">Explorar o jardim</span>
+                            <span class="sub" data-i18n="home.subJardim">Muitas plantas dançando com a sua música</span>
+                        </span>
+                    </button>
+                    <button class="card-modo laboratorio" onclick="entrarModoEstudo()">
+                        <span class="pictograma">🔍</span>
+                        <span class="card-texto">
+                            <span class="titulo" data-i18n="home.botaoEstudo">Laboratório das plantas</span>
+                            <span class="sub" data-i18n="home.subEstudo">Estude cada plantinha de pertinho</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-modo-jardim">
+        <!-- 3 Botões circulares (canto superior direito) -->
+        <div id="botoes-circulares">
+            <button class="btn-circular" style="background:var(--rosa-botao)" onclick="voltarMenu()" title="Início">🏠</button>
+            <button class="btn-circular" style="background:var(--lilas)" onclick="abrirModalProfessor()" title="Professor">👩🏽‍🏫</button>
+            <button class="btn-circular btn-menu" style="background:var(--verde-grama)" onclick="toggleSidebar()" title="Músicas &amp; Filtros">☰</button>
+        </div>
+
+        <!-- Barra inferior -->
+        <div id="barra-inferior">
+            <span id="nome-musica" data-i18n="explorar.instrucao">Envie uma música para começar</span>
+            <div id="controles-centro">
+                <button id="play-btn" onclick="togglePlay()"><svg width="14" height="14" viewBox="0 0 14 14" fill="white"><polygon points="3,2 12,7 3,12"/></svg></button>
+            </div>
+            <div id="volume-area">
+                <label for="volume-slider">🔊</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="100"
+                       oninput="ajustarVolume(this.value)">
+            </div>
+        </div>
+
+        <!-- Input de arquivo (oculto — event delegation no setup()) -->
+        <input type="file" id="audio-file" accept=".mp3,.wav,.ogg,.flac,.m4a" style="display:none">
+        <!-- Status oculto — mantido para compatibilidade com audio.js / sketch.js -->
+        <span id="status" style="display:none"></span>
+
+        <!-- Sidebar direita com tabs -->
+        <div id="sidebar-painel">
+            <div class="sidebar-header">
+                <div id="sidebar-tabs"></div>
+                <button class="sidebar-fechar" onclick="fecharSidebar()">✕</button>
+            </div>
+            <div id="pane-biblioteca" class="tab-pane">
+                <p id="sidebar-sem-musicas" data-i18n="explorar.semMusicas">Nenhuma música salva ainda.</p>
+                <div id="lista-musicas-conteudo"></div>
+                <button id="btn-adicionar-musica" onclick="document.getElementById('audio-file').click()">
+                    + <span data-i18n="explorar.adicionarMusica">Adicionar música</span>
+                </button>
+            </div>
+            <div id="pane-filtros" class="tab-pane" style="display:none">
+                <p class="filtros-desc" data-i18n="explorar.filtrosDesc">
+                    Escolha quais partes da música você quer ouvir e ver as plantinhas dançarem!
+                </p>
+                <div id="filtros-lista"></div>
+            </div>
+        </div>
+
+        <!-- Debug panel -->
+        <div id="debug-panel">
+            <div><strong>Amplitudes dos Stems</strong></div>
+            <div class="stem-bar" id="graves-bar">
+                <span class="label">Graves</span>
+                <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
+                <span class="value">0.00</span>
+            </div>
+            <div class="stem-bar" id="melodia-bar">
+                <span class="label">Melodia</span>
+                <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
+                <span class="value">0.00</span>
+            </div>
+            <div class="stem-bar" id="percussao-bar">
+                <span class="label">Percussão</span>
+                <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
+                <span class="value">0.00</span>
+            </div>
+            <div class="stem-bar" id="agudos-bar">
+                <span class="label">Agudos</span>
+                <span class="bar-bg"><span class="bar-fill" style="width:0%"></span></span>
+                <span class="value">0.00</span>
+            </div>
+            <div id="fps">FPS: --</div>
+            <div class="debug-hint" data-i18n="explorar.debugHint">D: debug | Espaço: play/pause</div>
+        </div>
+    </template>
+
+    <template id="tpl-laboratorio">
+        <div id="lab-overlay">
+            <!-- 2 Botões circulares (canto superior direito) -->
+            <div id="botoes-circulares">
+                <button class="btn-circular" style="background:var(--rosa-botao)" onclick="voltarMenu()" title="Início">🏠</button>
+                <button class="btn-circular" style="background:var(--lilas)" onclick="abrirModalProfessor()" title="Professor">👩🏽‍🏫</button>
+            </div>
+
+            <!-- Header -->
+            <div id="lab-header">
+                <span class="lab-icon">🔍</span>
+                <h1 class="lab-titulo" data-i18n="estudo.titulo">Laboratório das plantas</h1>
+            </div>
+
+            <!-- Pills de espécie -->
+            <div id="lab-pills">
+                <button class="pill-especie" data-especie="arvore" onclick="selecionarEspecieEstudo('arvore')">
+                    <span data-i18n="especies.arvore.nome">Árvore</span>
+                </button>
+                <button class="pill-especie" data-especie="flor" onclick="selecionarEspecieEstudo('flor')">
+                    <span data-i18n="especies.flor.nome">Flor</span>
+                </button>
+                <button class="pill-especie" data-especie="arbusto" onclick="selecionarEspecieEstudo('arbusto')">
+                    <span data-i18n="especies.arbusto.nome">Arbusto</span>
+                </button>
+                <button class="pill-especie" data-especie="dente" onclick="selecionarEspecieEstudo('dente')">
+                    <span data-i18n="especies.dente.nome">Dente-de-leão</span>
+                </button>
+            </div>
+
+            <!-- Layout principal: 2 colunas -->
+            <div id="lab-main">
+                <!-- Esquerda: palco + estímulos -->
+                <div id="lab-col-esquerda">
+                    <div id="lab-palco"></div>
+                    <div id="estudo-notas"></div>
+                </div>
+
+                <!-- Direita: wrapper relativo para imagem transbordar -->
+                <div id="lab-col-direita">
+                    <div id="lab-painel">
+                        <div id="estudo-tabela"></div>
+                    </div>
+                    <img id="lab-decoracao" src="assets/laboratorio-decoracao.png" alt=""
+                         onerror="this.style.display='none'">
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/addons/p5.sound.min.js"></script>
+    <script src="js/textos.js"></script>
+    <script src="js/componentes.js"></script>
     <script src="connected.js"></script>
     <script src="config.js"></script>
+    <script src="sprites.js"></script>
+    <script src="animacao.js"></script>
+    <script src="cacheStems.js"></script>
+    <script src="sintetizador.js"></script>
+    <script src="modos.js"></script>
     <script src="audio.js"></script>
     <script src="particulas.js"></script>
     <script src="plantas.js"></script>
     <script src="sketch.js"></script>
 </body>
 </html>
+

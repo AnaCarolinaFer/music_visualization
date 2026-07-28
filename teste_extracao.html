@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste — Extração de Frames</title>
+    <style>
+        body { margin:0; background:#222; color:#eee; font-family:monospace; }
+        #info { position:fixed; top:10px; left:10px; background:rgba(0,0,0,0.75); padding:10px 14px; border-radius:8px; line-height:1.8; }
+        #controles { position:fixed; bottom:20px; left:20px; }
+        #controles button { padding:10px 20px; margin-right:8px; border:none; border-radius:8px; cursor:pointer; font-size:15px; }
+        #btn-play  { background:#2ecc71; color:white; }
+        #btn-pause { background:#e74c3c; color:white; }
+        #btn-cache { background:#555; color:white; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <div>Frame: <span id="frame-num">0</span> / <span id="frame-total">?</span></div>
+        <div>Estado: <span id="estado">dormente</span></div>
+        <div>FPS: <span id="fps">0</span></div>
+        <div style="margin-top:6px; font-size:11px; color:#aaa;">Espaço: limpar cache sprites | R: reload</div>
+    </div>
+    <div id="controles">
+        <button id="btn-play"  onclick="testePlay()">Play (nascer)</button>
+        <button id="btn-pause" onclick="testePause()">Pause (murchar)</button>
+        <button id="btn-cache" onclick="limparCacheSprites(); location.reload()">Limpar cache</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/addons/p5.sound.min.js"></script>
+    <script src="connected.js"></script>
+    <script src="config.js"></script>
+    <script src="sprites.js"></script>
+    <script src="animacao.js"></script>
+    <script>
+        let sheetFlor;
+        let resultado = null;
+        let animador  = null;
+
+        const dadosFake = { amplitude: 0.08, onset: false, energia: 0.5 };
+
+        function preload() {
+            sheetFlor = loadImage('plantas/flores/flor_vermelha.png');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+            pixelDensity(1);
+            imageMode(CORNER);
+
+            resultado = carregarOuExtrair(sheetFlor, 'flor', 'flor_vermelha.png');
+            animador  = new AnimadorPlanta(resultado.totalFrames, 'flor');
+
+            document.getElementById('frame-total').textContent = resultado.totalFrames;
+        }
+
+        function draw() {
+            background(34);
+            if (!resultado || resultado.totalFrames === 0 || !animador) return;
+
+            // Simula dados de áudio
+            dadosFake.amplitude = 0.05 + Math.abs(Math.sin(frameCount * 0.05)) * 0.12;
+            dadosFake.onset     = (frameCount % 60 === 0);
+
+            animador.atualizar(dadosFake);
+
+            const i     = animador.frameAtual();
+            const frame = resultado.frames[i];
+
+            document.getElementById('frame-num').textContent = i;
+            document.getElementById('estado').textContent    = animador.estado;
+            document.getElementById('fps').textContent       = frameRate().toFixed(0);
+
+            if (!resultado.fb || !frame) return;
+
+            const escala = 3.5;
+            const fw = resultado.frameWidth  * escala;
+            const fh = resultado.frameHeight * escala;
+
+            push();
+            texture(resultado.fb);
+            noStroke();
+            beginShape(QUAD_STRIP);
+            vertex(-fw / 2, -fh / 2, 0, frame.u0, frame.vTop);
+            vertex( fw / 2, -fh / 2, 0, frame.u1, frame.vTop);
+            vertex(-fw / 2,  fh / 2, 0, frame.u0, 1);
+            vertex( fw / 2,  fh / 2, 0, frame.u1, 1);
+            endShape();
+            pop();
+        }
+
+        function testePlay()  { if (animador) animador.iniciarNascimento(); }
+        function testePause() { if (animador) animador.iniciarMorte(); }
+
+        function keyPressed() {
+            if (key === ' ') { limparCacheSprites(); location.reload(); }
+            if (key === 'r' || key === 'R') location.reload();
+        }
+    </script>
+</body>
+</html>
