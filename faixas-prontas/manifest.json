@@ -6,5 +6,9 @@
   {
     "slug": "host",
     "nome": "Host"
+  },
+  {
+    "slug": "symphony",
+    "nome": "Symphony"
   }
 ]
